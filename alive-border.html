@@ -17,7 +17,6 @@
       --warp-y: 0px;
       --warp-rot: 0deg;
       --warp-skew: 0deg;
-      --crt-vignette: 0.22;
       --rgb-shift: 0px;
       --hue: 0deg;
       --sat: 1;
@@ -27,7 +26,8 @@
       --wave-tilt: 0deg;
       --jag-x: 0px;
       --jag-y: 0px;
-      --glitch-alpha: 0.2;
+      --jitter-x: 0px;
+      --jitter-y: 0px;
     }
 
     * { box-sizing: border-box; }
@@ -47,6 +47,7 @@
       pointer-events: none;
       isolation: isolate;
       transform:
+        translate(var(--jitter-x), var(--jitter-y))
         translate(var(--warp-x), var(--warp-y))
         rotate(var(--warp-rot))
         skewX(var(--warp-skew));
@@ -107,10 +108,7 @@
     .inverts,
     .blocks,
     .crt,
-    .scanline,
-    .wave-overlay,
-    .jagged-edge,
-    .glitch-bands {
+    .jagged-edge {
       position: absolute;
       inset: 0;
       border-radius: 12px;
@@ -122,10 +120,7 @@
     .inverts,
     .blocks,
     .crt,
-    .scanline,
-    .wave-overlay,
-    .jagged-edge,
-    .glitch-bands {
+    .jagged-edge {
       -webkit-mask:
         linear-gradient(#000 0 0) content-box,
         linear-gradient(#000 0 0);
@@ -137,110 +132,43 @@
     .grain {
       opacity: var(--flicker-alpha);
       background:
-        repeating-linear-gradient(
-          0deg,
-          rgba(255,255,255,0.17) 0px,
-          rgba(255,255,255,0.17) 1px,
-          rgba(0,0,0,0) 2px,
-          rgba(0,0,0,0) 4px
-        ),
-        repeating-linear-gradient(
-          90deg,
-          rgba(197,161,255,0.17) 0px,
-          rgba(197,161,255,0.17) 1px,
-          rgba(0,0,0,0) 1px,
-          rgba(0,0,0,0) 3px
-        );
-      animation: staticJitter 540ms steps(3, end) infinite;
+        radial-gradient(circle at 20% 35%, rgba(255,255,255,0.15) 0 1px, transparent 2px),
+        radial-gradient(circle at 70% 68%, rgba(194, 152, 255, 0.2) 0 1px, transparent 2px),
+        radial-gradient(circle at 50% 22%, rgba(255,255,255,0.1) 0 1px, transparent 2px),
+        radial-gradient(circle at 86% 40%, rgba(170,130,255,0.14) 0 2px, transparent 3px);
+      background-size: 32px 28px, 36px 30px, 40px 34px, 46px 40px;
+      animation: noisePulse 780ms steps(3, end) infinite;
       mix-blend-mode: screen;
     }
 
-    .scanline {
-      opacity: 0.28;
-      background: linear-gradient(
-        to bottom,
-        transparent 0%,
-        rgba(255, 255, 255, 0.14) 42%,
-        rgba(220, 190, 255, 0.3) 49%,
-        transparent 100%
-      );
-      animation: scan 8.6s linear infinite;
-    }
-
     .crt {
-      opacity: 0.3;
+      opacity: 0.26;
       background:
-        repeating-linear-gradient(
-          0deg,
-          rgba(255,255,255,0.07) 0,
-          rgba(255,255,255,0.07) 1px,
-          rgba(0,0,0,0.06) 2px,
-          rgba(0,0,0,0.06) 3px
-        ),
         radial-gradient(
           ellipse at center,
-          rgba(255,255,255,0) 56%,
-          rgba(0,0,0,var(--crt-vignette)) 100%
+          rgba(255,255,255,0) 58%,
+          rgba(0,0,0,0.24) 100%
         );
-      animation: crtRoll 260ms steps(2, end) infinite;
+      animation: crtBreath 3.8s ease-in-out infinite;
       mix-blend-mode: soft-light;
-    }
-
-    .wave-overlay {
-      opacity: 0.2;
-      background:
-        repeating-linear-gradient(
-          0deg,
-          rgba(255,255,255,0.06) 0,
-          rgba(255,255,255,0.06) 1px,
-          rgba(0,0,0,0) 2px,
-          rgba(0,0,0,0) 7px
-        );
-      animation: waveRun 4.2s linear infinite;
-      mix-blend-mode: overlay;
     }
 
     .jagged-edge {
       opacity: 0.48;
       background:
-        linear-gradient(
-          to right,
-          rgba(26, 14, 55, 0.93) 0%,
-          rgba(172, 133, 255, 0.18) 7%,
-          rgba(22, 12, 47, 0.94) 15%,
-          rgba(170, 130, 255, 0.12) 20%,
-          rgba(22, 12, 47, 0.94) 29%,
-          rgba(170, 130, 255, 0.15) 37%,
-          rgba(22, 12, 47, 0.94) 46%,
-          rgba(170, 130, 255, 0.1) 54%,
-          rgba(22, 12, 47, 0.94) 64%,
-          rgba(170, 130, 255, 0.16) 73%,
-          rgba(22, 12, 47, 0.94) 84%,
-          rgba(170, 130, 255, 0.12) 92%,
-          rgba(22, 12, 47, 0.94) 100%
-        );
-      background-size: 140px 100%;
+        radial-gradient(circle at 8% 42%, rgba(170, 130, 255, 0.24) 0 4px, rgba(20, 11, 45, 0.9) 6px 16px, transparent 18px),
+        radial-gradient(circle at 24% 63%, rgba(162, 126, 255, 0.2) 0 5px, rgba(21, 10, 43, 0.9) 7px 15px, transparent 18px),
+        radial-gradient(circle at 41% 34%, rgba(184, 148, 255, 0.22) 0 4px, rgba(23, 12, 49, 0.9) 6px 14px, transparent 17px),
+        radial-gradient(circle at 57% 58%, rgba(170, 130, 255, 0.18) 0 5px, rgba(20, 10, 44, 0.88) 7px 16px, transparent 19px),
+        radial-gradient(circle at 73% 40%, rgba(176, 138, 255, 0.22) 0 4px, rgba(22, 11, 47, 0.9) 6px 14px, transparent 17px),
+        radial-gradient(circle at 88% 60%, rgba(168, 130, 255, 0.2) 0 5px, rgba(20, 10, 43, 0.9) 7px 15px, transparent 18px);
+      background-size: 180px 72px;
       mix-blend-mode: multiply;
       filter: contrast(1.14);
       animation: jagSkitter 160ms steps(2, end) infinite;
       transform: translate(var(--jag-x), var(--jag-y));
     }
 
-    .glitch-bands {
-      opacity: var(--glitch-alpha);
-      background:
-        repeating-linear-gradient(
-          0deg,
-          rgba(255, 255, 255, 0.22) 0px,
-          rgba(255, 255, 255, 0.22) 1px,
-          rgba(65, 28, 129, 0.55) 2px,
-          rgba(65, 28, 129, 0.55) 6px,
-          rgba(0, 0, 0, 0) 8px,
-          rgba(0, 0, 0, 0) 16px
-        );
-      mix-blend-mode: screen;
-      animation: glitchSweep 1.4s steps(4, end) infinite;
-    }
 
     .rgb-ghost {
       position: absolute;
@@ -325,10 +253,10 @@
       100% { transform: translateX(-1.4px); }
     }
 
-    @keyframes staticJitter {
+    @keyframes noisePulse {
       0% { transform: translate(0, 0); }
-      30% { transform: translate(0.5px, -0.5px); }
-      60% { transform: translate(-0.8px, 0.3px); }
+      30% { transform: translate(0.35px, -0.35px); }
+      60% { transform: translate(-0.5px, 0.2px); }
       100% { transform: translate(0, 0); }
     }
 
@@ -340,20 +268,9 @@
       53% { opacity: 0.78; }
     }
 
-    @keyframes scan {
-      from { transform: translateY(-100%); }
-      to { transform: translateY(100%); }
-    }
-
-    @keyframes crtRoll {
-      0% { transform: translateY(0); }
-      50% { transform: translateY(0.45px); }
-      100% { transform: translateY(0); }
-    }
-
-    @keyframes waveRun {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(10px); }
+    @keyframes crtBreath {
+      0%, 100% { opacity: 0.24; filter: brightness(0.95); }
+      50% { opacity: 0.33; filter: brightness(1.06); }
     }
 
     @keyframes jagSkitter {
@@ -362,12 +279,6 @@
       50% { transform: translate(-0.7px, 0.3px); }
       75% { transform: translate(0.4px, 0.5px); }
       100% { transform: translate(0, 0); }
-    }
-
-    @keyframes glitchSweep {
-      0% { transform: translateY(-6px); }
-      50% { transform: translateY(4px); }
-      100% { transform: translateY(-6px); }
     }
 
     @keyframes blink {
@@ -389,10 +300,7 @@
     <div class="rgb-ghost"></div>
     <div class="grain"></div>
     <div class="crt"></div>
-    <div class="scanline"></div>
-    <div class="wave-overlay"></div>
     <div class="jagged-edge"></div>
-    <div class="glitch-bands"></div>
     <div class="pixels" id="pixels"></div>
     <div class="inverts" id="inverts"></div>
     <div class="blocks" id="blocks"></div>
@@ -478,7 +386,6 @@
       root.style.setProperty('--pulse', rand(0.92, 1.1).toFixed(3));
       root.style.setProperty('--noise-shift', `${rand(-1.6, 1.6).toFixed(2)}px`);
       root.style.setProperty('--flicker-alpha', rand(0.12, 0.26).toFixed(3));
-      root.style.setProperty('--crt-vignette', rand(0.14, 0.28).toFixed(3));
       root.style.setProperty('--rgb-shift', `${rand(-1.5, 1.5).toFixed(2)}px`);
       root.style.setProperty('--wave-y', `${rand(-1.8, 1.8).toFixed(2)}px`);
       root.style.setProperty('--wave-tilt', `${rand(-0.35, 0.35).toFixed(3)}deg`);
@@ -488,7 +395,6 @@
       root.style.setProperty('--contrast', rand(0.97, 1.14).toFixed(3));
       root.style.setProperty('--jag-x', `${rand(-1.1, 1.1).toFixed(2)}px`);
       root.style.setProperty('--jag-y', `${rand(-0.8, 0.8).toFixed(2)}px`);
-      root.style.setProperty('--glitch-alpha', rand(0.12, 0.33).toFixed(3));
     }
 
     function warpPulse() {
@@ -499,7 +405,6 @@
       root.style.setProperty('--warp-skew', `${rand(-0.8, 0.8).toFixed(3)}deg`);
 
       frame.style.filter = `hue-rotate(${rand(-18, 18).toFixed(1)}deg) saturate(${rand(0.95, 1.25).toFixed(2)}) brightness(${rand(0.9, 1.12).toFixed(2)}) contrast(${rand(0.96, 1.18).toFixed(2)})`;
-      root.style.setProperty('--glitch-alpha', rand(0.2, 0.52).toFixed(3));
       frame.classList.add('shaking');
 
       setTimeout(() => {
@@ -512,11 +417,13 @@
       }, rand(110, 300));
     }
 
+    function jitterTick() {
+      root.style.setProperty('--jitter-x', `${rand(-0.85, 0.85).toFixed(2)}px`);
+      root.style.setProperty('--jitter-y', `${rand(-0.85, 0.85).toFixed(2)}px`);
+    }
+
     setInterval(() => {
       const burst = Math.floor(rand(3, 9));
-      if (Math.random() < 0.22) {
-        root.style.setProperty('--glitch-alpha', rand(0.3, 0.62).toFixed(3));
-      }
       for (let i = 0; i < burst; i++) spawnPixel();
 
       const chunkBursts = Math.floor(rand(0, 3));
@@ -539,6 +446,8 @@
         [...blocksLayer.children].slice(0, 22).forEach((el) => el.remove());
       }
     }, 760);
+
+    setInterval(jitterTick, 70);
 
     window.addEventListener('resize', moodShift);
     moodShift();
