@@ -11,8 +11,8 @@ This repository includes a creepy animated browser-source border for Streamlabs:
 
 - Motion stack: occasional shake bursts, slight rotation/skew warp pulses, breathing pulse, and constant micro-jitter on X/Y position
 - Color drift: randomized hue/saturation/brightness/contrast shifts and RGB ghost offsets
-- Texture style: no scanline/striped line overlays; uses soft noise and jagged block-edge treatment instead
-- Extra glitch motion: faster artifact bursts with subtle frame-coordinate jitter updates
+- Texture style: no scanline/striped line overlays; uses soft noise with organic glitch texture
+- Blob behavior: border blobs now grow/shrink over their lifetime and visually merge into each other (metaball-like)
 - Artifacts: dead/hot pixels, invert pixels, and medium dead/inverted chunk blocks
 
 ## Streamlabs setup

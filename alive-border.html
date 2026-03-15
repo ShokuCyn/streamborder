@@ -24,8 +24,7 @@
       --contrast: 1;
       --wave-y: 0px;
       --wave-tilt: 0deg;
-      --jag-x: 0px;
-      --jag-y: 0px;
+      --blob-alpha: 0.6;
       --jitter-x: 0px;
       --jitter-y: 0px;
     }
@@ -108,7 +107,7 @@
     .inverts,
     .blocks,
     .crt,
-    .jagged-edge {
+    .blobs {
       position: absolute;
       inset: 0;
       border-radius: 12px;
@@ -120,7 +119,7 @@
     .inverts,
     .blocks,
     .crt,
-    .jagged-edge {
+    .blobs {
       -webkit-mask:
         linear-gradient(#000 0 0) content-box,
         linear-gradient(#000 0 0);
@@ -153,20 +152,27 @@
       mix-blend-mode: soft-light;
     }
 
-    .jagged-edge {
-      opacity: 0.48;
-      background:
-        radial-gradient(circle at 8% 42%, rgba(170, 130, 255, 0.24) 0 4px, rgba(20, 11, 45, 0.9) 6px 16px, transparent 18px),
-        radial-gradient(circle at 24% 63%, rgba(162, 126, 255, 0.2) 0 5px, rgba(21, 10, 43, 0.9) 7px 15px, transparent 18px),
-        radial-gradient(circle at 41% 34%, rgba(184, 148, 255, 0.22) 0 4px, rgba(23, 12, 49, 0.9) 6px 14px, transparent 17px),
-        radial-gradient(circle at 57% 58%, rgba(170, 130, 255, 0.18) 0 5px, rgba(20, 10, 44, 0.88) 7px 16px, transparent 19px),
-        radial-gradient(circle at 73% 40%, rgba(176, 138, 255, 0.22) 0 4px, rgba(22, 11, 47, 0.9) 6px 14px, transparent 17px),
-        radial-gradient(circle at 88% 60%, rgba(168, 130, 255, 0.2) 0 5px, rgba(20, 10, 43, 0.9) 7px 15px, transparent 18px);
-      background-size: 180px 72px;
-      mix-blend-mode: multiply;
-      filter: contrast(1.14);
-      animation: jagSkitter 160ms steps(2, end) infinite;
-      transform: translate(var(--jag-x), var(--jag-y));
+    .blobs {
+      opacity: var(--blob-alpha);
+      filter: blur(3px) contrast(1.4);
+      mix-blend-mode: screen;
+      transform: translateZ(0);
+    }
+
+    .blob {
+      position: absolute;
+      border-radius: 999px;
+      background: radial-gradient(
+        circle at 35% 35%,
+        rgba(224, 206, 255, 0.86) 0%,
+        rgba(173, 135, 255, 0.62) 42%,
+        rgba(109, 70, 224, 0.15) 76%,
+        rgba(76, 42, 165, 0) 100%
+      );
+      transform: translate(0, 0) scale(0.5);
+      animation: blobLife var(--life, 2600ms) ease-in-out forwards;
+      will-change: transform, opacity;
+      opacity: 0;
     }
 
 
@@ -273,12 +279,23 @@
       50% { opacity: 0.33; filter: brightness(1.06); }
     }
 
-    @keyframes jagSkitter {
-      0% { transform: translate(0, 0); }
-      25% { transform: translate(0.6px, -0.4px); }
-      50% { transform: translate(-0.7px, 0.3px); }
-      75% { transform: translate(0.4px, 0.5px); }
-      100% { transform: translate(0, 0); }
+    @keyframes blobLife {
+      0% {
+        opacity: 0;
+        transform: translate(0, 0) scale(0.45);
+      }
+      22% {
+        opacity: 0.95;
+        transform: translate(calc(var(--dx) * 0.25), calc(var(--dy) * 0.25)) scale(var(--peak, 1.35));
+      }
+      60% {
+        opacity: 0.9;
+        transform: translate(calc(var(--dx) * 0.78), calc(var(--dy) * 0.78)) scale(calc(var(--peak, 1.35) * 0.9));
+      }
+      100% {
+        opacity: 0;
+        transform: translate(var(--dx), var(--dy)) scale(0.55);
+      }
     }
 
     @keyframes blink {
@@ -300,7 +317,7 @@
     <div class="rgb-ghost"></div>
     <div class="grain"></div>
     <div class="crt"></div>
-    <div class="jagged-edge"></div>
+    <div class="blobs" id="blobs"></div>
     <div class="pixels" id="pixels"></div>
     <div class="inverts" id="inverts"></div>
     <div class="blocks" id="blocks"></div>
@@ -312,6 +329,7 @@
     const pixelsLayer = document.getElementById('pixels');
     const invertLayer = document.getElementById('inverts');
     const blocksLayer = document.getElementById('blocks');
+    const blobsLayer = document.getElementById('blobs');
 
     const rand = (min, max) => Math.random() * (max - min) + min;
     const pick = (items) => items[Math.floor(Math.random() * items.length)];
@@ -382,6 +400,26 @@
       setTimeout(() => block.remove(), rand(600, 2200));
     }
 
+    function spawnBlob() {
+      if (Math.random() > 0.72) return;
+      const blob = document.createElement('span');
+      blob.className = 'blob';
+
+      const size = pick([14, 18, 22, 26, 30, 36, 42]);
+      const p = borderPosition(size);
+      blob.style.width = `${size}px`;
+      blob.style.height = `${size}px`;
+      blob.style.left = `${p.x}px`;
+      blob.style.top = `${p.y}px`;
+      blob.style.setProperty('--dx', `${rand(-10, 10).toFixed(2)}px`);
+      blob.style.setProperty('--dy', `${rand(-8, 8).toFixed(2)}px`);
+      blob.style.setProperty('--peak', rand(1.18, 1.9).toFixed(3));
+      blob.style.setProperty('--life', `${rand(1500, 3200).toFixed(0)}ms`);
+
+      blobsLayer.appendChild(blob);
+      setTimeout(() => blob.remove(), 3400);
+    }
+
     function moodShift() {
       root.style.setProperty('--pulse', rand(0.92, 1.1).toFixed(3));
       root.style.setProperty('--noise-shift', `${rand(-1.6, 1.6).toFixed(2)}px`);
@@ -393,8 +431,7 @@
       root.style.setProperty('--sat', rand(0.96, 1.18).toFixed(3));
       root.style.setProperty('--bright', rand(0.94, 1.08).toFixed(3));
       root.style.setProperty('--contrast', rand(0.97, 1.14).toFixed(3));
-      root.style.setProperty('--jag-x', `${rand(-1.1, 1.1).toFixed(2)}px`);
-      root.style.setProperty('--jag-y', `${rand(-0.8, 0.8).toFixed(2)}px`);
+      root.style.setProperty('--blob-alpha', rand(0.45, 0.78).toFixed(3));
     }
 
     function warpPulse() {
@@ -425,6 +462,7 @@
     setInterval(() => {
       const burst = Math.floor(rand(3, 9));
       for (let i = 0; i < burst; i++) spawnPixel();
+      for (let i = 0; i < 3; i++) spawnBlob();
 
       const chunkBursts = Math.floor(rand(0, 3));
       for (let i = 0; i < chunkBursts; i++) spawnChunk();
@@ -444,6 +482,9 @@
       }
       if (blocksLayer.childElementCount > 70) {
         [...blocksLayer.children].slice(0, 22).forEach((el) => el.remove());
+      }
+      if (blobsLayer.childElementCount > 90) {
+        [...blobsLayer.children].slice(0, 26).forEach((el) => el.remove());
       }
     }, 760);
 
