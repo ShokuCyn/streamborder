@@ -24,7 +24,7 @@
       --contrast: 1;
       --wave-y: 0px;
       --wave-tilt: 0deg;
-      --blob-alpha: 0.6;
+      --donut-alpha: 0.68;
       --jitter-x: 0px;
       --jitter-y: 0px;
     }
@@ -107,7 +107,7 @@
     .inverts,
     .blocks,
     .crt,
-    .blobs {
+    .donuts {
       position: absolute;
       inset: 0;
       border-radius: 12px;
@@ -119,7 +119,7 @@
     .inverts,
     .blocks,
     .crt,
-    .blobs {
+    .donuts {
       -webkit-mask:
         linear-gradient(#000 0 0) content-box,
         linear-gradient(#000 0 0);
@@ -152,25 +152,27 @@
       mix-blend-mode: soft-light;
     }
 
-    .blobs {
-      opacity: var(--blob-alpha);
+    .donuts {
+      opacity: var(--donut-alpha);
       filter: blur(3px) contrast(1.4);
       mix-blend-mode: screen;
       transform: translateZ(0);
     }
 
-    .blob {
+    .donut {
       position: absolute;
       border-radius: 999px;
       background: radial-gradient(
-        circle at 35% 35%,
-        rgba(224, 206, 255, 0.86) 0%,
-        rgba(173, 135, 255, 0.62) 42%,
-        rgba(109, 70, 224, 0.15) 76%,
+        circle at 50% 50%,
+        rgba(236, 224, 255, 0.92) 0 18%,
+        rgba(186, 149, 255, 0.7) 20% 40%,
+        rgba(34, 18, 73, 0) 42% 56%,
+        rgba(175, 136, 255, 0.45) 58% 73%,
+        rgba(96, 58, 195, 0.16) 75% 88%,
         rgba(76, 42, 165, 0) 100%
       );
       transform: translate(0, 0) scale(0.5);
-      animation: blobLife var(--life, 2600ms) ease-in-out forwards;
+      animation: donutLife var(--life, 3000ms) ease-in-out forwards;
       will-change: transform, opacity;
       opacity: 0;
     }
@@ -279,7 +281,7 @@
       50% { opacity: 0.33; filter: brightness(1.06); }
     }
 
-    @keyframes blobLife {
+    @keyframes donutLife {
       0% {
         opacity: 0;
         transform: translate(0, 0) scale(0.45);
@@ -289,12 +291,12 @@
         transform: translate(calc(var(--dx) * 0.25), calc(var(--dy) * 0.25)) scale(var(--peak, 1.35));
       }
       60% {
-        opacity: 0.9;
-        transform: translate(calc(var(--dx) * 0.78), calc(var(--dy) * 0.78)) scale(calc(var(--peak, 1.35) * 0.9));
+        opacity: 0.88;
+        transform: translate(calc(var(--dx) * 0.82), calc(var(--dy) * 0.82)) scale(calc(var(--peak, 1.35) * 0.94));
       }
       100% {
         opacity: 0;
-        transform: translate(var(--dx), var(--dy)) scale(0.55);
+        transform: translate(var(--dx), var(--dy)) scale(0.52);
       }
     }
 
@@ -317,7 +319,7 @@
     <div class="rgb-ghost"></div>
     <div class="grain"></div>
     <div class="crt"></div>
-    <div class="blobs" id="blobs"></div>
+    <div class="donuts" id="donuts"></div>
     <div class="pixels" id="pixels"></div>
     <div class="inverts" id="inverts"></div>
     <div class="blocks" id="blocks"></div>
@@ -329,7 +331,8 @@
     const pixelsLayer = document.getElementById('pixels');
     const invertLayer = document.getElementById('inverts');
     const blocksLayer = document.getElementById('blocks');
-    const blobsLayer = document.getElementById('blobs');
+    const donutsLayer = document.getElementById('donuts');
+    const donutState = [];
 
     const rand = (min, max) => Math.random() * (max - min) + min;
     const pick = (items) => items[Math.floor(Math.random() * items.length)];
@@ -400,24 +403,75 @@
       setTimeout(() => block.remove(), rand(600, 2200));
     }
 
-    function spawnBlob() {
-      if (Math.random() > 0.72) return;
-      const blob = document.createElement('span');
-      blob.className = 'blob';
+    function createDonut({ size, x, y, dx, dy, peak, life }) {
+      const donut = document.createElement('span');
+      donut.className = 'donut';
+      donut.style.width = `${size}px`;
+      donut.style.height = `${size}px`;
+      donut.style.left = `${x}px`;
+      donut.style.top = `${y}px`;
+      donut.style.setProperty('--dx', `${dx.toFixed(2)}px`);
+      donut.style.setProperty('--dy', `${dy.toFixed(2)}px`);
+      donut.style.setProperty('--peak', peak.toFixed(3));
+      donut.style.setProperty('--life', `${life.toFixed(0)}ms`);
+      donutsLayer.appendChild(donut);
 
-      const size = pick([14, 18, 22, 26, 30, 36, 42]);
+      const state = { el: donut, x, y, size, born: Date.now(), life };
+      donutState.push(state);
+
+      setTimeout(() => {
+        donut.remove();
+        const idx = donutState.indexOf(state);
+        if (idx >= 0) donutState.splice(idx, 1);
+      }, life + 700);
+    }
+
+    function spawnDonut() {
+      if (Math.random() > 0.8) return;
+      const size = pick([16, 20, 24, 28, 34, 40]);
       const p = borderPosition(size);
-      blob.style.width = `${size}px`;
-      blob.style.height = `${size}px`;
-      blob.style.left = `${p.x}px`;
-      blob.style.top = `${p.y}px`;
-      blob.style.setProperty('--dx', `${rand(-10, 10).toFixed(2)}px`);
-      blob.style.setProperty('--dy', `${rand(-8, 8).toFixed(2)}px`);
-      blob.style.setProperty('--peak', rand(1.18, 1.9).toFixed(3));
-      blob.style.setProperty('--life', `${rand(1500, 3200).toFixed(0)}ms`);
+      createDonut({
+        size,
+        x: p.x,
+        y: p.y,
+        dx: rand(-12, 12),
+        dy: rand(-10, 10),
+        peak: rand(1.2, 2.05),
+        life: rand(1800, 3600)
+      });
+    }
 
-      blobsLayer.appendChild(blob);
-      setTimeout(() => blob.remove(), 3400);
+    function mergeDonuts() {
+      if (donutState.length < 2 || Math.random() > 0.35) return;
+      for (let i = 0; i < donutState.length; i++) {
+        const a = donutState[i];
+        for (let j = i + 1; j < donutState.length; j++) {
+          const b = donutState[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const dist = Math.hypot(dx, dy);
+          const threshold = (a.size + b.size) * 0.7;
+          if (dist < threshold) {
+            const mergedSize = Math.min(96, Math.round((a.size + b.size) * rand(0.68, 0.84)));
+            const mx = (a.x + b.x) / 2;
+            const my = (a.y + b.y) / 2;
+            a.el.remove();
+            b.el.remove();
+            donutState.splice(j, 1);
+            donutState.splice(i, 1);
+            createDonut({
+              size: mergedSize,
+              x: mx,
+              y: my,
+              dx: rand(-14, 14),
+              dy: rand(-12, 12),
+              peak: rand(1.15, 1.75),
+              life: rand(2200, 4200)
+            });
+            return;
+          }
+        }
+      }
     }
 
     function moodShift() {
@@ -431,7 +485,7 @@
       root.style.setProperty('--sat', rand(0.96, 1.18).toFixed(3));
       root.style.setProperty('--bright', rand(0.94, 1.08).toFixed(3));
       root.style.setProperty('--contrast', rand(0.97, 1.14).toFixed(3));
-      root.style.setProperty('--blob-alpha', rand(0.45, 0.78).toFixed(3));
+      root.style.setProperty('--donut-alpha', rand(0.5, 0.82).toFixed(3));
     }
 
     function warpPulse() {
@@ -462,13 +516,14 @@
     setInterval(() => {
       const burst = Math.floor(rand(3, 9));
       for (let i = 0; i < burst; i++) spawnPixel();
-      for (let i = 0; i < 3; i++) spawnBlob();
+      for (let i = 0; i < 4; i++) spawnDonut();
 
       const chunkBursts = Math.floor(rand(0, 3));
       for (let i = 0; i < chunkBursts; i++) spawnChunk();
 
       spawnInvert();
       warpPulse();
+      mergeDonuts();
 
       if (Math.random() < 0.45) moodShift();
     }, 105);
@@ -483,8 +538,8 @@
       if (blocksLayer.childElementCount > 70) {
         [...blocksLayer.children].slice(0, 22).forEach((el) => el.remove());
       }
-      if (blobsLayer.childElementCount > 90) {
-        [...blobsLayer.children].slice(0, 26).forEach((el) => el.remove());
+      if (donutsLayer.childElementCount > 110) {
+        [...donutsLayer.children].slice(0, 32).forEach((el) => el.remove());
       }
     }, 760);
 
