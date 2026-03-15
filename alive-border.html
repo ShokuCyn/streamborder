@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alive Stream Border</title>
+  <style>
+    :root {
+      --border-size: clamp(24px, 2vw, 42px);
+      --outer-color: #7f4dff;
+      --mid-color: #a382ff;
+      --inner-glow: rgba(170, 145, 255, 0.75);
+      --pulse: 1;
+      --noise-shift: 0px;
+      --flicker-alpha: 0.24;
+      --warp-x: 0px;
+      --warp-y: 0px;
+      --warp-rot: 0deg;
+      --warp-skew: 0deg;
+      --rgb-shift: 0px;
+      --hue: 0deg;
+      --sat: 1;
+      --bright: 1;
+      --contrast: 1;
+      --wave-y: 0px;
+      --wave-tilt: 0deg;
+      --donut-alpha: 0.68;
+      --jitter-x: 0px;
+      --jitter-y: 0px;
+      --chaos-boost: 1;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      background: transparent;
+      overflow: hidden;
+      font-family: "Segoe UI", system-ui, sans-serif;
+    }
+
+    .frame {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      isolation: isolate;
+      transform:
+        translate(var(--jitter-x), var(--jitter-y))
+        translate(var(--warp-x), var(--warp-y))
+        rotate(var(--warp-rot))
+        skewX(var(--warp-skew));
+      transform-origin: center;
+      animation: baselineWarp 6.5s ease-in-out infinite;
+      filter:
+        hue-rotate(var(--hue))
+        saturate(var(--sat))
+        brightness(var(--bright))
+        contrast(var(--contrast));
+    }
+
+    .frame.shaking {
+      animation: shakeBurst 130ms steps(2, end) infinite;
+    }
+
+    .frame.chaos {
+      animation: shakeBurst 85ms steps(2, end) infinite;
+      filter:
+        hue-rotate(calc(var(--hue) + 12deg))
+        saturate(calc(var(--sat) * 1.15))
+        brightness(calc(var(--bright) * 1.08))
+        contrast(calc(var(--contrast) * 1.12));
+    }
+
+    .ring {
+      position: absolute;
+      inset: 0;
+      border: var(--border-size) solid var(--outer-color);
+      border-radius: 12px;
+      opacity: calc(0.9 * var(--pulse));
+      filter: saturate(1.08) brightness(1.02);
+      box-shadow:
+        0 0 0 1px rgba(184, 164, 255, 0.45),
+        0 0 24px 2px rgba(155, 115, 255, 0.35),
+        inset 0 0 20px rgba(183, 149, 255, 0.28);
+      animation: breathe 6.8s ease-in-out infinite;
+      transform: translateY(var(--wave-y)) skewY(var(--wave-tilt));
+    }
+
+    .ring::before,
+    .ring::after {
+      content: "";
+      position: absolute;
+      inset: calc(-1 * var(--border-size));
+      border-radius: 14px;
+      pointer-events: none;
+    }
+
+    .ring::before {
+      border: max(4px, calc(var(--border-size) * 0.28)) solid var(--mid-color);
+      opacity: 0.55;
+      mix-blend-mode: screen;
+      animation: drift 4.8s linear infinite;
+      transform: translateX(var(--noise-shift));
+    }
+
+    .ring::after {
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow: inset 0 0 36px var(--inner-glow);
+      opacity: 0.65;
+      animation: twitch 3.4s steps(7, end) infinite;
+    }
+
+    .grain,
+    .pixels,
+    .inverts,
+    .blocks,
+    .crt,
+    .donuts {
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .grain,
+    .pixels,
+    .inverts,
+    .blocks,
+    .crt,
+    .donuts {
+      -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+      padding: calc(var(--border-size) - 2px);
+    }
+
+    .grain {
+      opacity: var(--flicker-alpha);
+      background:
+        radial-gradient(circle at 20% 35%, rgba(255,255,255,0.15) 0 1px, transparent 2px),
+        radial-gradient(circle at 70% 68%, rgba(194, 152, 255, 0.2) 0 1px, transparent 2px),
+        radial-gradient(circle at 50% 22%, rgba(255,255,255,0.1) 0 1px, transparent 2px),
+        radial-gradient(circle at 86% 40%, rgba(170,130,255,0.14) 0 2px, transparent 3px);
+      background-size: 32px 28px, 36px 30px, 40px 34px, 46px 40px;
+      animation: noisePulse 780ms steps(3, end) infinite;
+      mix-blend-mode: screen;
+    }
+
+    .crt {
+      opacity: 0.26;
+      background:
+        radial-gradient(
+          ellipse at center,
+          rgba(255,255,255,0) 58%,
+          rgba(0,0,0,0.24) 100%
+        );
+      animation: crtBreath 3.8s ease-in-out infinite;
+      mix-blend-mode: soft-light;
+    }
+
+    .donuts {
+      opacity: var(--donut-alpha);
+      filter: blur(3px) contrast(1.4);
+      mix-blend-mode: screen;
+      transform: translateZ(0);
+    }
+
+    .donut {
+      position: absolute;
+      border-radius: 999px;
+      background: radial-gradient(
+        circle at 50% 50%,
+        rgba(236, 224, 255, 0.92) 0 18%,
+        rgba(186, 149, 255, 0.7) 20% 40%,
+        rgba(34, 18, 73, 0) 42% 56%,
+        rgba(175, 136, 255, 0.45) 58% 73%,
+        rgba(96, 58, 195, 0.16) 75% 88%,
+        rgba(76, 42, 165, 0) 100%
+      );
+      transform: translate(0, 0) scale(0.5);
+      animation: donutLife var(--life, 3000ms) ease-in-out forwards;
+      will-change: transform, opacity;
+      opacity: 0;
+    }
+
+    .donut.chaos {
+      filter: saturate(1.24) brightness(1.1);
+    }
+
+
+    .rgb-ghost {
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      border: var(--border-size) solid rgba(140, 102, 255, 0.26);
+      filter: blur(1px);
+      transform: translateX(var(--rgb-shift)) translateY(calc(var(--wave-y) * -0.35));
+      mix-blend-mode: screen;
+      opacity: 0.42;
+    }
+
+    .pixel,
+    .invert,
+    .chunk {
+      position: absolute;
+      image-rendering: pixelated;
+    }
+
+    .pixel {
+      width: 2px;
+      height: 2px;
+      opacity: 0.85;
+      background: rgba(10, 10, 14, 0.9);
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.45);
+    }
+
+    .pixel.dead { background: rgba(0, 0, 0, 0.95); }
+
+    .pixel.hot {
+      background: rgba(217, 191, 255, 0.95);
+      box-shadow: 0 0 7px rgba(193, 156, 255, 0.55);
+    }
+
+    .invert {
+      width: 5px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.86);
+      mix-blend-mode: difference;
+      opacity: 0.75;
+      animation: blink 1800ms steps(2, end) infinite;
+    }
+
+    .chunk {
+      border-radius: 1px;
+      opacity: 0.8;
+      animation: blockDecay 1200ms linear forwards;
+    }
+
+    .chunk.dead {
+      background: rgba(0, 0, 0, 0.96);
+      box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.08);
+    }
+
+    .chunk.invert {
+      background: rgba(255, 255, 255, 0.9);
+      mix-blend-mode: difference;
+    }
+
+    .shock {
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+      padding: calc(var(--border-size) - 2px);
+      background: radial-gradient(circle at center, rgba(255,255,255,0.28), rgba(170,130,255,0) 62%);
+      opacity: 0;
+      mix-blend-mode: screen;
+      animation: shockPulse 2200ms ease-out infinite;
+    }
+
+    @keyframes breathe {
+      0%, 100% { filter: saturate(1.02) brightness(0.98); }
+      50% { filter: saturate(1.16) brightness(1.06); }
+    }
+
+    @keyframes baselineWarp {
+      0%, 100% { transform: translate(0, 0) rotate(0deg) skewX(0deg); }
+      35% { transform: translate(0.22px, -0.2px) rotate(-0.04deg) skewX(0.04deg); }
+      58% { transform: translate(-0.28px, 0.14px) rotate(0.03deg) skewX(-0.06deg); }
+    }
+
+    @keyframes shakeBurst {
+      0% { transform: translate(-0.6px, 0.3px) rotate(-0.08deg); }
+      25% { transform: translate(0.7px, -0.4px) rotate(0.07deg); }
+      50% { transform: translate(-0.5px, -0.6px) rotate(-0.06deg); }
+      75% { transform: translate(0.6px, 0.4px) rotate(0.05deg); }
+      100% { transform: translate(0, 0) rotate(0deg); }
+    }
+
+    @keyframes drift {
+      0% { transform: translateX(-1.4px); }
+      50% { transform: translateX(1.8px); }
+      100% { transform: translateX(-1.4px); }
+    }
+
+    @keyframes noisePulse {
+      0% { transform: translate(0, 0); }
+      30% { transform: translate(0.35px, -0.35px); }
+      60% { transform: translate(-0.5px, 0.2px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    @keyframes twitch {
+      0%, 100% { opacity: 0.7; }
+      25% { opacity: 0.4; }
+      26% { opacity: 0.82; }
+      52% { opacity: 0.48; }
+      53% { opacity: 0.78; }
+    }
+
+    @keyframes crtBreath {
+      0%, 100% { opacity: 0.24; filter: brightness(0.95); }
+      50% { opacity: 0.33; filter: brightness(1.06); }
+    }
+
+    @keyframes donutLife {
+      0% {
+        opacity: 0;
+        transform: translate(0, 0) scale(0.45);
+      }
+      22% {
+        opacity: 0.95;
+        transform: translate(calc(var(--dx) * 0.25), calc(var(--dy) * 0.25)) scale(var(--peak, 1.35));
+      }
+      60% {
+        opacity: 0.88;
+        transform: translate(calc(var(--dx) * 0.82), calc(var(--dy) * 0.82)) scale(calc(var(--peak, 1.35) * 0.94));
+      }
+      100% {
+        opacity: 0;
+        transform: translate(var(--dx), var(--dy)) scale(0.52);
+      }
+    }
+
+    @keyframes blink {
+      0%, 15%, 100% { opacity: 0.76; }
+      16%, 18% { opacity: 0.08; }
+      19%, 22% { opacity: 0.74; }
+      23%, 30% { opacity: 0.1; }
+    }
+
+    @keyframes blockDecay {
+      0% { opacity: 0.9; filter: blur(0px); }
+      100% { opacity: 0.05; filter: blur(0.5px); }
+    }
+
+    @keyframes shockPulse {
+      0%, 88%, 100% { opacity: 0; transform: scale(0.9); }
+      90% { opacity: 0.5; transform: scale(1.02); }
+      96% { opacity: 0.2; transform: scale(1.05); }
+    }
+  </style>
+</head>
+<body>
+  <main class="frame" id="frame" aria-hidden="true">
+    <div class="ring"></div>
+    <div class="rgb-ghost"></div>
+    <div class="grain"></div>
+    <div class="crt"></div>
+    <div class="shock"></div>
+    <div class="donuts" id="donuts"></div>
+    <div class="pixels" id="pixels"></div>
+    <div class="inverts" id="inverts"></div>
+    <div class="blocks" id="blocks"></div>
+  </main>
+
+  <script>
+    const root = document.documentElement;
+    const frame = document.getElementById('frame');
+    const pixelsLayer = document.getElementById('pixels');
+    const invertLayer = document.getElementById('inverts');
+    const blocksLayer = document.getElementById('blocks');
+    const donutsLayer = document.getElementById('donuts');
+    const donutState = [];
+
+    const rand = (min, max) => Math.random() * (max - min) + min;
+    const pick = (items) => items[Math.floor(Math.random() * items.length)];
+
+    function borderPosition(size = 2) {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const t = parseFloat(getComputedStyle(root).getPropertyValue('--border-size'));
+      const side = pick(['top', 'right', 'bottom', 'left']);
+      const jitter = rand(-8, 8);
+
+      if (side === 'top') return { x: rand(0, w - size), y: rand(0, t - size) + jitter };
+      if (side === 'bottom') return { x: rand(0, w - size), y: h - t + rand(0, t - size) + jitter };
+      if (side === 'left') return { x: rand(0, t - size) + jitter, y: rand(0, h - size) };
+      return { x: w - t + rand(0, t - size) + jitter, y: rand(0, h - size) };
+    }
+
+    function spawnPixel() {
+      const dot = document.createElement('span');
+      dot.className = `pixel ${Math.random() < 0.16 ? 'hot' : Math.random() < 0.52 ? 'dead' : ''}`.trim();
+      const size = Math.random() < 0.14 ? 3 : 2;
+      const p = borderPosition(size);
+
+      dot.style.width = `${size}px`;
+      dot.style.height = `${size}px`;
+      dot.style.left = `${p.x}px`;
+      dot.style.top = `${p.y}px`;
+      dot.style.opacity = String(rand(0.35, 0.98));
+      pixelsLayer.appendChild(dot);
+
+      setTimeout(() => dot.remove(), rand(280, 1400));
+    }
+
+    function spawnInvert() {
+      if (Math.random() > 0.58) return;
+      const block = document.createElement('span');
+      block.className = 'invert';
+      const size = pick([4, 5, 6, 7, 8]);
+      const p = borderPosition(size);
+
+      block.style.width = `${size}px`;
+      block.style.height = `${size}px`;
+      block.style.left = `${p.x}px`;
+      block.style.top = `${p.y}px`;
+      block.style.animationDuration = `${rand(1200, 2400)}ms`;
+      invertLayer.appendChild(block);
+
+      setTimeout(() => block.remove(), rand(500, 1900));
+    }
+
+    function spawnChunk() {
+      if (Math.random() > 0.4) return;
+      const block = document.createElement('span');
+      const kind = Math.random() < 0.5 ? 'dead' : 'invert';
+      block.className = `chunk ${kind}`;
+
+      const sizeW = pick([10, 14, 18, 22, 26, 32, 40]);
+      const sizeH = pick([8, 10, 12, 16, 20, 24]);
+      const p = borderPosition(Math.max(sizeW, sizeH));
+
+      block.style.width = `${sizeW}px`;
+      block.style.height = `${sizeH}px`;
+      block.style.left = `${p.x}px`;
+      block.style.top = `${p.y}px`;
+      block.style.transform = `skew(${rand(-5, 5).toFixed(2)}deg, ${rand(-3, 3).toFixed(2)}deg)`;
+      blocksLayer.appendChild(block);
+
+      setTimeout(() => block.remove(), rand(600, 2200));
+    }
+
+    function createDonut({ size, x, y, dx, dy, peak, life }) {
+      const donut = document.createElement('span');
+      donut.className = 'donut';
+      if (Math.random() < 0.22) donut.classList.add('chaos');
+      donut.style.width = `${size}px`;
+      donut.style.height = `${size}px`;
+      donut.style.left = `${x}px`;
+      donut.style.top = `${y}px`;
+      donut.style.setProperty('--dx', `${dx.toFixed(2)}px`);
+      donut.style.setProperty('--dy', `${dy.toFixed(2)}px`);
+      donut.style.setProperty('--peak', peak.toFixed(3));
+      donut.style.setProperty('--life', `${life.toFixed(0)}ms`);
+      donutsLayer.appendChild(donut);
+
+      const state = { el: donut, x, y, size, born: Date.now(), life };
+      donutState.push(state);
+
+      setTimeout(() => {
+        donut.remove();
+        const idx = donutState.indexOf(state);
+        if (idx >= 0) donutState.splice(idx, 1);
+      }, life + 700);
+    }
+
+    function spawnDonut() {
+      if (Math.random() > 0.86) return;
+      const size = pick([14, 18, 22, 26, 32, 40, 48]);
+      const p = borderPosition(size);
+      createDonut({
+        size,
+        x: p.x,
+        y: p.y,
+        dx: rand(-16, 16),
+        dy: rand(-14, 14),
+        peak: rand(1.28, 2.2),
+        life: rand(1600, 3600)
+      });
+    }
+
+    function mergeDonuts() {
+      if (donutState.length < 2 || Math.random() > 0.35) return;
+      for (let i = 0; i < donutState.length; i++) {
+        const a = donutState[i];
+        for (let j = i + 1; j < donutState.length; j++) {
+          const b = donutState[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const dist = Math.hypot(dx, dy);
+          const threshold = (a.size + b.size) * 0.7;
+          if (dist < threshold) {
+            const mergedSize = Math.min(96, Math.round((a.size + b.size) * rand(0.68, 0.84)));
+            const mx = (a.x + b.x) / 2;
+            const my = (a.y + b.y) / 2;
+            a.el.remove();
+            b.el.remove();
+            donutState.splice(j, 1);
+            donutState.splice(i, 1);
+            createDonut({
+              size: mergedSize,
+              x: mx,
+              y: my,
+              dx: rand(-14, 14),
+              dy: rand(-12, 12),
+              peak: rand(1.15, 1.75),
+              life: rand(2200, 4200)
+            });
+            return;
+          }
+        }
+      }
+    }
+
+    function splitDonut() {
+      if (donutState.length < 1 || Math.random() > 0.2) return;
+      const parent = pick(donutState);
+      if (parent.size < 34) return;
+
+      parent.el.remove();
+      const idx = donutState.indexOf(parent);
+      if (idx >= 0) donutState.splice(idx, 1);
+
+      const child = Math.max(14, Math.round(parent.size * rand(0.45, 0.62)));
+      for (let i = 0; i < 2; i++) {
+        createDonut({
+          size: child,
+          x: parent.x + rand(-6, 6),
+          y: parent.y + rand(-6, 6),
+          dx: rand(-18, 18),
+          dy: rand(-16, 16),
+          peak: rand(1.2, 1.85),
+          life: rand(1400, 3000)
+        });
+      }
+    }
+
+    function moodShift() {
+      root.style.setProperty('--pulse', rand(0.92, 1.1).toFixed(3));
+      root.style.setProperty('--noise-shift', `${rand(-1.6, 1.6).toFixed(2)}px`);
+      root.style.setProperty('--flicker-alpha', rand(0.12, 0.26).toFixed(3));
+      root.style.setProperty('--rgb-shift', `${rand(-1.5, 1.5).toFixed(2)}px`);
+      root.style.setProperty('--wave-y', `${rand(-1.8, 1.8).toFixed(2)}px`);
+      root.style.setProperty('--wave-tilt', `${rand(-0.35, 0.35).toFixed(3)}deg`);
+      root.style.setProperty('--hue', `${rand(-8, 8).toFixed(2)}deg`);
+      root.style.setProperty('--sat', rand(0.96, 1.18).toFixed(3));
+      root.style.setProperty('--bright', rand(0.94, 1.08).toFixed(3));
+      root.style.setProperty('--contrast', rand(0.97, 1.14).toFixed(3));
+      root.style.setProperty('--donut-alpha', rand(0.5, 0.82).toFixed(3));
+      root.style.setProperty('--chaos-boost', rand(0.95, 1.5).toFixed(3));
+    }
+
+    function warpPulse() {
+      if (Math.random() > 0.18) return;
+      root.style.setProperty('--warp-x', `${rand(-1.8, 1.8).toFixed(2)}px`);
+      root.style.setProperty('--warp-y', `${rand(-1.2, 1.2).toFixed(2)}px`);
+      root.style.setProperty('--warp-rot', `${rand(-0.35, 0.35).toFixed(3)}deg`);
+      root.style.setProperty('--warp-skew', `${rand(-0.8, 0.8).toFixed(3)}deg`);
+
+      frame.style.filter = `hue-rotate(${rand(-18, 18).toFixed(1)}deg) saturate(${rand(0.95, 1.25).toFixed(2)}) brightness(${rand(0.9, 1.12).toFixed(2)}) contrast(${rand(0.96, 1.18).toFixed(2)})`;
+      frame.classList.add('shaking');
+
+      setTimeout(() => {
+        root.style.setProperty('--warp-x', '0px');
+        root.style.setProperty('--warp-y', '0px');
+        root.style.setProperty('--warp-rot', '0deg');
+        root.style.setProperty('--warp-skew', '0deg');
+        frame.style.filter = '';
+        frame.classList.remove('shaking');
+      }, rand(110, 300));
+    }
+
+    function jitterTick() {
+      const boost = parseFloat(getComputedStyle(root).getPropertyValue('--chaos-boost')) || 1;
+      root.style.setProperty('--jitter-x', `${rand(-0.95 * boost, 0.95 * boost).toFixed(2)}px`);
+      root.style.setProperty('--jitter-y', `${rand(-0.95 * boost, 0.95 * boost).toFixed(2)}px`);
+    }
+
+    function chaosPulse() {
+      if (Math.random() > 0.14) return;
+      frame.classList.add('chaos');
+      for (let i = 0; i < 10; i++) spawnDonut();
+      for (let i = 0; i < 8; i++) spawnPixel();
+      for (let i = 0; i < 2; i++) spawnChunk();
+      setTimeout(() => frame.classList.remove('chaos'), rand(170, 420));
+    }
+
+    setInterval(() => {
+      const burst = Math.floor(rand(3, 9));
+      for (let i = 0; i < burst; i++) spawnPixel();
+      for (let i = 0; i < 6; i++) spawnDonut();
+
+      const chunkBursts = Math.floor(rand(0, 3));
+      for (let i = 0; i < chunkBursts; i++) spawnChunk();
+
+      spawnInvert();
+      warpPulse();
+      mergeDonuts();
+      splitDonut();
+      chaosPulse();
+
+      if (Math.random() < 0.62) moodShift();
+    }, 90);
+
+    setInterval(() => {
+      if (pixelsLayer.childElementCount > 260) {
+        [...pixelsLayer.children].slice(0, 80).forEach((el) => el.remove());
+      }
+      if (invertLayer.childElementCount > 70) {
+        [...invertLayer.children].slice(0, 20).forEach((el) => el.remove());
+      }
+      if (blocksLayer.childElementCount > 70) {
+        [...blocksLayer.children].slice(0, 22).forEach((el) => el.remove());
+      }
+      if (donutsLayer.childElementCount > 110) {
+        [...donutsLayer.children].slice(0, 32).forEach((el) => el.remove());
+      }
+    }, 760);
+
+    setInterval(jitterTick, 70);
+
+    window.addEventListener('resize', moodShift);
+    moodShift();
+  </script>
+</body>
+</html>
