@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alive Stream Border</title>
+  <style>
+    :root {
+      --border-size: clamp(24px, 2vw, 42px);
+      --outer-color: #7f4dff;
+      --mid-color: #a382ff;
+      --inner-glow: rgba(170, 145, 255, 0.75);
+      --pulse: 1;
+      --noise-shift: 0px;
+      --flicker-alpha: 0.24;
+      --warp-x: 0px;
+      --warp-y: 0px;
+      --warp-rot: 0deg;
+      --warp-skew: 0deg;
+      --rgb-shift: 0px;
+      --hue: 0deg;
+      --sat: 1;
+      --bright: 1;
+      --contrast: 1;
+      --wave-y: 0px;
+      --wave-tilt: 0deg;
+      --blob-alpha: 0.6;
+      --jitter-x: 0px;
+      --jitter-y: 0px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      background: transparent;
+      overflow: hidden;
+      font-family: "Segoe UI", system-ui, sans-serif;
+    }
+
+    .frame {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      isolation: isolate;
+      transform:
+        translate(var(--jitter-x), var(--jitter-y))
+        translate(var(--warp-x), var(--warp-y))
+        rotate(var(--warp-rot))
+        skewX(var(--warp-skew));
+      transform-origin: center;
+      animation: baselineWarp 6.5s ease-in-out infinite;
+      filter:
+        hue-rotate(var(--hue))
+        saturate(var(--sat))
+        brightness(var(--bright))
+        contrast(var(--contrast));
+    }
+
+    .frame.shaking {
+      animation: shakeBurst 130ms steps(2, end) infinite;
+    }
+
+    .ring {
+      position: absolute;
+      inset: 0;
+      border: var(--border-size) solid var(--outer-color);
+      border-radius: 12px;
+      opacity: calc(0.9 * var(--pulse));
+      filter: saturate(1.08) brightness(1.02);
+      box-shadow:
+        0 0 0 1px rgba(184, 164, 255, 0.45),
+        0 0 24px 2px rgba(155, 115, 255, 0.35),
+        inset 0 0 20px rgba(183, 149, 255, 0.28);
+      animation: breathe 6.8s ease-in-out infinite;
+      transform: translateY(var(--wave-y)) skewY(var(--wave-tilt));
+    }
+
+    .ring::before,
+    .ring::after {
+      content: "";
+      position: absolute;
+      inset: calc(-1 * var(--border-size));
+      border-radius: 14px;
+      pointer-events: none;
+    }
+
+    .ring::before {
+      border: max(4px, calc(var(--border-size) * 0.28)) solid var(--mid-color);
+      opacity: 0.55;
+      mix-blend-mode: screen;
+      animation: drift 4.8s linear infinite;
+      transform: translateX(var(--noise-shift));
+    }
+
+    .ring::after {
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow: inset 0 0 36px var(--inner-glow);
+      opacity: 0.65;
+      animation: twitch 3.4s steps(7, end) infinite;
+    }
+
+    .grain,
+    .pixels,
+    .inverts,
+    .blocks,
+    .crt,
+    .blobs {
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .grain,
+    .pixels,
+    .inverts,
+    .blocks,
+    .crt,
+    .blobs {
+      -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+      padding: calc(var(--border-size) - 2px);
+    }
+
+    .grain {
+      opacity: var(--flicker-alpha);
+      background:
+        radial-gradient(circle at 20% 35%, rgba(255,255,255,0.15) 0 1px, transparent 2px),
+        radial-gradient(circle at 70% 68%, rgba(194, 152, 255, 0.2) 0 1px, transparent 2px),
+        radial-gradient(circle at 50% 22%, rgba(255,255,255,0.1) 0 1px, transparent 2px),
+        radial-gradient(circle at 86% 40%, rgba(170,130,255,0.14) 0 2px, transparent 3px);
+      background-size: 32px 28px, 36px 30px, 40px 34px, 46px 40px;
+      animation: noisePulse 780ms steps(3, end) infinite;
+      mix-blend-mode: screen;
+    }
+
+    .crt {
+      opacity: 0.26;
+      background:
+        radial-gradient(
+          ellipse at center,
+          rgba(255,255,255,0) 58%,
+          rgba(0,0,0,0.24) 100%
+        );
+      animation: crtBreath 3.8s ease-in-out infinite;
+      mix-blend-mode: soft-light;
+    }
+
+    .blobs {
+      opacity: var(--blob-alpha);
+      filter: blur(3px) contrast(1.4);
+      mix-blend-mode: screen;
+      transform: translateZ(0);
+    }
+
+    .blob {
+      position: absolute;
+      border-radius: 999px;
+      background: radial-gradient(
+        circle at 35% 35%,
+        rgba(224, 206, 255, 0.86) 0%,
+        rgba(173, 135, 255, 0.62) 42%,
+        rgba(109, 70, 224, 0.15) 76%,
+        rgba(76, 42, 165, 0) 100%
+      );
+      transform: translate(0, 0) scale(0.5);
+      animation: blobLife var(--life, 2600ms) ease-in-out forwards;
+      will-change: transform, opacity;
+      opacity: 0;
+    }
+
+
+    .rgb-ghost {
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      border: var(--border-size) solid rgba(140, 102, 255, 0.26);
+      filter: blur(1px);
+      transform: translateX(var(--rgb-shift)) translateY(calc(var(--wave-y) * -0.35));
+      mix-blend-mode: screen;
+      opacity: 0.42;
+    }
+
+    .pixel,
+    .invert,
+    .chunk {
+      position: absolute;
+      image-rendering: pixelated;
+    }
+
+    .pixel {
+      width: 2px;
+      height: 2px;
+      opacity: 0.85;
+      background: rgba(10, 10, 14, 0.9);
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.45);
+    }
+
+    .pixel.dead { background: rgba(0, 0, 0, 0.95); }
+
+    .pixel.hot {
+      background: rgba(217, 191, 255, 0.95);
+      box-shadow: 0 0 7px rgba(193, 156, 255, 0.55);
+    }
+
+    .invert {
+      width: 5px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.86);
+      mix-blend-mode: difference;
+      opacity: 0.75;
+      animation: blink 1800ms steps(2, end) infinite;
+    }
+
+    .chunk {
+      border-radius: 1px;
+      opacity: 0.8;
+      animation: blockDecay 1200ms linear forwards;
+    }
+
+    .chunk.dead {
+      background: rgba(0, 0, 0, 0.96);
+      box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.08);
+    }
+
+    .chunk.invert {
+      background: rgba(255, 255, 255, 0.9);
+      mix-blend-mode: difference;
+    }
+
+    @keyframes breathe {
+      0%, 100% { filter: saturate(1.02) brightness(0.98); }
+      50% { filter: saturate(1.16) brightness(1.06); }
+    }
+
+    @keyframes baselineWarp {
+      0%, 100% { transform: translate(0, 0) rotate(0deg) skewX(0deg); }
+      35% { transform: translate(0.22px, -0.2px) rotate(-0.04deg) skewX(0.04deg); }
+      58% { transform: translate(-0.28px, 0.14px) rotate(0.03deg) skewX(-0.06deg); }
+    }
+
+    @keyframes shakeBurst {
+      0% { transform: translate(-0.6px, 0.3px) rotate(-0.08deg); }
+      25% { transform: translate(0.7px, -0.4px) rotate(0.07deg); }
+      50% { transform: translate(-0.5px, -0.6px) rotate(-0.06deg); }
+      75% { transform: translate(0.6px, 0.4px) rotate(0.05deg); }
+      100% { transform: translate(0, 0) rotate(0deg); }
+    }
+
+    @keyframes drift {
+      0% { transform: translateX(-1.4px); }
+      50% { transform: translateX(1.8px); }
+      100% { transform: translateX(-1.4px); }
+    }
+
+    @keyframes noisePulse {
+      0% { transform: translate(0, 0); }
+      30% { transform: translate(0.35px, -0.35px); }
+      60% { transform: translate(-0.5px, 0.2px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    @keyframes twitch {
+      0%, 100% { opacity: 0.7; }
+      25% { opacity: 0.4; }
+      26% { opacity: 0.82; }
+      52% { opacity: 0.48; }
+      53% { opacity: 0.78; }
+    }
+
+    @keyframes crtBreath {
+      0%, 100% { opacity: 0.24; filter: brightness(0.95); }
+      50% { opacity: 0.33; filter: brightness(1.06); }
+    }
+
+    @keyframes blobLife {
+      0% {
+        opacity: 0;
+        transform: translate(0, 0) scale(0.45);
+      }
+      22% {
+        opacity: 0.95;
+        transform: translate(calc(var(--dx) * 0.25), calc(var(--dy) * 0.25)) scale(var(--peak, 1.35));
+      }
+      60% {
+        opacity: 0.9;
+        transform: translate(calc(var(--dx) * 0.78), calc(var(--dy) * 0.78)) scale(calc(var(--peak, 1.35) * 0.9));
+      }
+      100% {
+        opacity: 0;
+        transform: translate(var(--dx), var(--dy)) scale(0.55);
+      }
+    }
+
+    @keyframes blink {
+      0%, 15%, 100% { opacity: 0.76; }
+      16%, 18% { opacity: 0.08; }
+      19%, 22% { opacity: 0.74; }
+      23%, 30% { opacity: 0.1; }
+    }
+
+    @keyframes blockDecay {
+      0% { opacity: 0.9; filter: blur(0px); }
+      100% { opacity: 0.05; filter: blur(0.5px); }
+    }
+  </style>
+</head>
+<body>
+  <main class="frame" id="frame" aria-hidden="true">
+    <div class="ring"></div>
+    <div class="rgb-ghost"></div>
+    <div class="grain"></div>
+    <div class="crt"></div>
+    <div class="blobs" id="blobs"></div>
+    <div class="pixels" id="pixels"></div>
+    <div class="inverts" id="inverts"></div>
+    <div class="blocks" id="blocks"></div>
+  </main>
+
+  <script>
+    const root = document.documentElement;
+    const frame = document.getElementById('frame');
+    const pixelsLayer = document.getElementById('pixels');
+    const invertLayer = document.getElementById('inverts');
+    const blocksLayer = document.getElementById('blocks');
+    const blobsLayer = document.getElementById('blobs');
+
+    const rand = (min, max) => Math.random() * (max - min) + min;
+    const pick = (items) => items[Math.floor(Math.random() * items.length)];
+
+    function borderPosition(size = 2) {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const t = parseFloat(getComputedStyle(root).getPropertyValue('--border-size'));
+      const side = pick(['top', 'right', 'bottom', 'left']);
+      const jitter = rand(-8, 8);
+
+      if (side === 'top') return { x: rand(0, w - size), y: rand(0, t - size) + jitter };
+      if (side === 'bottom') return { x: rand(0, w - size), y: h - t + rand(0, t - size) + jitter };
+      if (side === 'left') return { x: rand(0, t - size) + jitter, y: rand(0, h - size) };
+      return { x: w - t + rand(0, t - size) + jitter, y: rand(0, h - size) };
+    }
+
+    function spawnPixel() {
+      const dot = document.createElement('span');
+      dot.className = `pixel ${Math.random() < 0.16 ? 'hot' : Math.random() < 0.52 ? 'dead' : ''}`.trim();
+      const size = Math.random() < 0.14 ? 3 : 2;
+      const p = borderPosition(size);
+
+      dot.style.width = `${size}px`;
+      dot.style.height = `${size}px`;
+      dot.style.left = `${p.x}px`;
+      dot.style.top = `${p.y}px`;
+      dot.style.opacity = String(rand(0.35, 0.98));
+      pixelsLayer.appendChild(dot);
+
+      setTimeout(() => dot.remove(), rand(280, 1400));
+    }
+
+    function spawnInvert() {
+      if (Math.random() > 0.58) return;
+      const block = document.createElement('span');
+      block.className = 'invert';
+      const size = pick([4, 5, 6, 7, 8]);
+      const p = borderPosition(size);
+
+      block.style.width = `${size}px`;
+      block.style.height = `${size}px`;
+      block.style.left = `${p.x}px`;
+      block.style.top = `${p.y}px`;
+      block.style.animationDuration = `${rand(1200, 2400)}ms`;
+      invertLayer.appendChild(block);
+
+      setTimeout(() => block.remove(), rand(500, 1900));
+    }
+
+    function spawnChunk() {
+      if (Math.random() > 0.4) return;
+      const block = document.createElement('span');
+      const kind = Math.random() < 0.5 ? 'dead' : 'invert';
+      block.className = `chunk ${kind}`;
+
+      const sizeW = pick([10, 14, 18, 22, 26, 32, 40]);
+      const sizeH = pick([8, 10, 12, 16, 20, 24]);
+      const p = borderPosition(Math.max(sizeW, sizeH));
+
+      block.style.width = `${sizeW}px`;
+      block.style.height = `${sizeH}px`;
+      block.style.left = `${p.x}px`;
+      block.style.top = `${p.y}px`;
+      block.style.transform = `skew(${rand(-5, 5).toFixed(2)}deg, ${rand(-3, 3).toFixed(2)}deg)`;
+      blocksLayer.appendChild(block);
+
+      setTimeout(() => block.remove(), rand(600, 2200));
+    }
+
+    function spawnBlob() {
+      if (Math.random() > 0.72) return;
+      const blob = document.createElement('span');
+      blob.className = 'blob';
+
+      const size = pick([14, 18, 22, 26, 30, 36, 42]);
+      const p = borderPosition(size);
+      blob.style.width = `${size}px`;
+      blob.style.height = `${size}px`;
+      blob.style.left = `${p.x}px`;
+      blob.style.top = `${p.y}px`;
+      blob.style.setProperty('--dx', `${rand(-10, 10).toFixed(2)}px`);
+      blob.style.setProperty('--dy', `${rand(-8, 8).toFixed(2)}px`);
+      blob.style.setProperty('--peak', rand(1.18, 1.9).toFixed(3));
+      blob.style.setProperty('--life', `${rand(1500, 3200).toFixed(0)}ms`);
+
+      blobsLayer.appendChild(blob);
+      setTimeout(() => blob.remove(), 3400);
+    }
+
+    function moodShift() {
+      root.style.setProperty('--pulse', rand(0.92, 1.1).toFixed(3));
+      root.style.setProperty('--noise-shift', `${rand(-1.6, 1.6).toFixed(2)}px`);
+      root.style.setProperty('--flicker-alpha', rand(0.12, 0.26).toFixed(3));
+      root.style.setProperty('--rgb-shift', `${rand(-1.5, 1.5).toFixed(2)}px`);
+      root.style.setProperty('--wave-y', `${rand(-1.8, 1.8).toFixed(2)}px`);
+      root.style.setProperty('--wave-tilt', `${rand(-0.35, 0.35).toFixed(3)}deg`);
+      root.style.setProperty('--hue', `${rand(-8, 8).toFixed(2)}deg`);
+      root.style.setProperty('--sat', rand(0.96, 1.18).toFixed(3));
+      root.style.setProperty('--bright', rand(0.94, 1.08).toFixed(3));
+      root.style.setProperty('--contrast', rand(0.97, 1.14).toFixed(3));
+      root.style.setProperty('--blob-alpha', rand(0.45, 0.78).toFixed(3));
+    }
+
+    function warpPulse() {
+      if (Math.random() > 0.18) return;
+      root.style.setProperty('--warp-x', `${rand(-1.8, 1.8).toFixed(2)}px`);
+      root.style.setProperty('--warp-y', `${rand(-1.2, 1.2).toFixed(2)}px`);
+      root.style.setProperty('--warp-rot', `${rand(-0.35, 0.35).toFixed(3)}deg`);
+      root.style.setProperty('--warp-skew', `${rand(-0.8, 0.8).toFixed(3)}deg`);
+
+      frame.style.filter = `hue-rotate(${rand(-18, 18).toFixed(1)}deg) saturate(${rand(0.95, 1.25).toFixed(2)}) brightness(${rand(0.9, 1.12).toFixed(2)}) contrast(${rand(0.96, 1.18).toFixed(2)})`;
+      frame.classList.add('shaking');
+
+      setTimeout(() => {
+        root.style.setProperty('--warp-x', '0px');
+        root.style.setProperty('--warp-y', '0px');
+        root.style.setProperty('--warp-rot', '0deg');
+        root.style.setProperty('--warp-skew', '0deg');
+        frame.style.filter = '';
+        frame.classList.remove('shaking');
+      }, rand(110, 300));
+    }
+
+    function jitterTick() {
+      root.style.setProperty('--jitter-x', `${rand(-0.85, 0.85).toFixed(2)}px`);
+      root.style.setProperty('--jitter-y', `${rand(-0.85, 0.85).toFixed(2)}px`);
+    }
+
+    setInterval(() => {
+      const burst = Math.floor(rand(3, 9));
+      for (let i = 0; i < burst; i++) spawnPixel();
+      for (let i = 0; i < 3; i++) spawnBlob();
+
+      const chunkBursts = Math.floor(rand(0, 3));
+      for (let i = 0; i < chunkBursts; i++) spawnChunk();
+
+      spawnInvert();
+      warpPulse();
+
+      if (Math.random() < 0.45) moodShift();
+    }, 105);
+
+    setInterval(() => {
+      if (pixelsLayer.childElementCount > 260) {
+        [...pixelsLayer.children].slice(0, 80).forEach((el) => el.remove());
+      }
+      if (invertLayer.childElementCount > 70) {
+        [...invertLayer.children].slice(0, 20).forEach((el) => el.remove());
+      }
+      if (blocksLayer.childElementCount > 70) {
+        [...blocksLayer.children].slice(0, 22).forEach((el) => el.remove());
+      }
+      if (blobsLayer.childElementCount > 90) {
+        [...blobsLayer.children].slice(0, 26).forEach((el) => el.remove());
+      }
+    }, 760);
+
+    setInterval(jitterTick, 70);
+
+    window.addEventListener('resize', moodShift);
+    moodShift();
+  </script>
+</body>
+</html>
