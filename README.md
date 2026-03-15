@@ -5,14 +5,14 @@ This repository includes a creepy animated browser-source border for Streamlabs:
 - File: `alive-border.html`
 - Resolution target: 1920x1080 (scales to window size)
 - Base look: chunkier purple frame inspired by `stream border.png`
-- Mood: unstable CRT / glitch / creepypasta energy (dialed back from full-chaos mode)
+- Mood: unstable CRT / glitch / creepypasta energy with periodic chaos bursts
 
 ## Effect highlights
 
-- Motion stack: occasional shake bursts, slight rotation/skew warp pulses, breathing pulse, and constant micro-jitter on X/Y position
+- Motion stack: shake bursts, rotation/skew warp pulses, breathing pulse, chaos surges, and constant micro-jitter on X/Y position
 - Color drift: randomized hue/saturation/brightness/contrast shifts and RGB ghost offsets
 - Texture style: no scanline/striped line overlays; uses soft noise with organic glitch texture
-- Donut behavior: floating border donuts grow/shrink over time and merge into larger donuts (metaball-like)
+- Donut behavior: floating border donuts grow/shrink, merge into larger donuts, and sometimes split back out into smaller moving donuts
 - Artifacts: dead/hot pixels, invert pixels, and medium dead/inverted chunk blocks
 
 ## Streamlabs setup

@@ -27,6 +27,7 @@
       --donut-alpha: 0.68;
       --jitter-x: 0px;
       --jitter-y: 0px;
+      --chaos-boost: 1;
     }
 
     * { box-sizing: border-box; }
@@ -61,6 +62,15 @@
 
     .frame.shaking {
       animation: shakeBurst 130ms steps(2, end) infinite;
+    }
+
+    .frame.chaos {
+      animation: shakeBurst 85ms steps(2, end) infinite;
+      filter:
+        hue-rotate(calc(var(--hue) + 12deg))
+        saturate(calc(var(--sat) * 1.15))
+        brightness(calc(var(--bright) * 1.08))
+        contrast(calc(var(--contrast) * 1.12));
     }
 
     .ring {
@@ -177,6 +187,10 @@
       opacity: 0;
     }
 
+    .donut.chaos {
+      filter: saturate(1.24) brightness(1.1);
+    }
+
 
     .rgb-ghost {
       position: absolute;
@@ -234,6 +248,22 @@
     .chunk.invert {
       background: rgba(255, 255, 255, 0.9);
       mix-blend-mode: difference;
+    }
+
+    .shock {
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+      padding: calc(var(--border-size) - 2px);
+      background: radial-gradient(circle at center, rgba(255,255,255,0.28), rgba(170,130,255,0) 62%);
+      opacity: 0;
+      mix-blend-mode: screen;
+      animation: shockPulse 2200ms ease-out infinite;
     }
 
     @keyframes breathe {
@@ -311,6 +341,12 @@
       0% { opacity: 0.9; filter: blur(0px); }
       100% { opacity: 0.05; filter: blur(0.5px); }
     }
+
+    @keyframes shockPulse {
+      0%, 88%, 100% { opacity: 0; transform: scale(0.9); }
+      90% { opacity: 0.5; transform: scale(1.02); }
+      96% { opacity: 0.2; transform: scale(1.05); }
+    }
   </style>
 </head>
 <body>
@@ -319,6 +355,7 @@
     <div class="rgb-ghost"></div>
     <div class="grain"></div>
     <div class="crt"></div>
+    <div class="shock"></div>
     <div class="donuts" id="donuts"></div>
     <div class="pixels" id="pixels"></div>
     <div class="inverts" id="inverts"></div>
@@ -406,6 +443,7 @@
     function createDonut({ size, x, y, dx, dy, peak, life }) {
       const donut = document.createElement('span');
       donut.className = 'donut';
+      if (Math.random() < 0.22) donut.classList.add('chaos');
       donut.style.width = `${size}px`;
       donut.style.height = `${size}px`;
       donut.style.left = `${x}px`;
@@ -427,17 +465,17 @@
     }
 
     function spawnDonut() {
-      if (Math.random() > 0.8) return;
-      const size = pick([16, 20, 24, 28, 34, 40]);
+      if (Math.random() > 0.86) return;
+      const size = pick([14, 18, 22, 26, 32, 40, 48]);
       const p = borderPosition(size);
       createDonut({
         size,
         x: p.x,
         y: p.y,
-        dx: rand(-12, 12),
-        dy: rand(-10, 10),
-        peak: rand(1.2, 2.05),
-        life: rand(1800, 3600)
+        dx: rand(-16, 16),
+        dy: rand(-14, 14),
+        peak: rand(1.28, 2.2),
+        life: rand(1600, 3600)
       });
     }
 
@@ -474,6 +512,29 @@
       }
     }
 
+    function splitDonut() {
+      if (donutState.length < 1 || Math.random() > 0.2) return;
+      const parent = pick(donutState);
+      if (parent.size < 34) return;
+
+      parent.el.remove();
+      const idx = donutState.indexOf(parent);
+      if (idx >= 0) donutState.splice(idx, 1);
+
+      const child = Math.max(14, Math.round(parent.size * rand(0.45, 0.62)));
+      for (let i = 0; i < 2; i++) {
+        createDonut({
+          size: child,
+          x: parent.x + rand(-6, 6),
+          y: parent.y + rand(-6, 6),
+          dx: rand(-18, 18),
+          dy: rand(-16, 16),
+          peak: rand(1.2, 1.85),
+          life: rand(1400, 3000)
+        });
+      }
+    }
+
     function moodShift() {
       root.style.setProperty('--pulse', rand(0.92, 1.1).toFixed(3));
       root.style.setProperty('--noise-shift', `${rand(-1.6, 1.6).toFixed(2)}px`);
@@ -486,6 +547,7 @@
       root.style.setProperty('--bright', rand(0.94, 1.08).toFixed(3));
       root.style.setProperty('--contrast', rand(0.97, 1.14).toFixed(3));
       root.style.setProperty('--donut-alpha', rand(0.5, 0.82).toFixed(3));
+      root.style.setProperty('--chaos-boost', rand(0.95, 1.5).toFixed(3));
     }
 
     function warpPulse() {
@@ -509,14 +571,24 @@
     }
 
     function jitterTick() {
-      root.style.setProperty('--jitter-x', `${rand(-0.85, 0.85).toFixed(2)}px`);
-      root.style.setProperty('--jitter-y', `${rand(-0.85, 0.85).toFixed(2)}px`);
+      const boost = parseFloat(getComputedStyle(root).getPropertyValue('--chaos-boost')) || 1;
+      root.style.setProperty('--jitter-x', `${rand(-0.95 * boost, 0.95 * boost).toFixed(2)}px`);
+      root.style.setProperty('--jitter-y', `${rand(-0.95 * boost, 0.95 * boost).toFixed(2)}px`);
+    }
+
+    function chaosPulse() {
+      if (Math.random() > 0.14) return;
+      frame.classList.add('chaos');
+      for (let i = 0; i < 10; i++) spawnDonut();
+      for (let i = 0; i < 8; i++) spawnPixel();
+      for (let i = 0; i < 2; i++) spawnChunk();
+      setTimeout(() => frame.classList.remove('chaos'), rand(170, 420));
     }
 
     setInterval(() => {
       const burst = Math.floor(rand(3, 9));
       for (let i = 0; i < burst; i++) spawnPixel();
-      for (let i = 0; i < 4; i++) spawnDonut();
+      for (let i = 0; i < 6; i++) spawnDonut();
 
       const chunkBursts = Math.floor(rand(0, 3));
       for (let i = 0; i < chunkBursts; i++) spawnChunk();
@@ -524,9 +596,11 @@
       spawnInvert();
       warpPulse();
       mergeDonuts();
+      splitDonut();
+      chaosPulse();
 
-      if (Math.random() < 0.45) moodShift();
-    }, 105);
+      if (Math.random() < 0.62) moodShift();
+    }, 90);
 
     setInterval(() => {
       if (pixelsLayer.childElementCount > 260) {
