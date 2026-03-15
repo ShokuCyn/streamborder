@@ -10,7 +10,8 @@ This repository includes a creepy animated browser-source border for Streamlabs:
 ## Effect highlights
 
 - Motion stack: shake bursts, rotation/skew warp pulses, breathing pulse, chaos surges, and constant micro-jitter on X/Y position
-- Color drift: randomized hue/saturation/brightness/contrast shifts and RGB ghost offsets
+- Color drift: slower/smoother hue/saturation/brightness/contrast shifts with occasional jumpy spikes
+- Border depth: thicker, more 3D ring lighting and inner/outer glow shaping
 - Texture style: no scanline/striped line overlays; uses soft noise with organic glitch texture
 - Donut behavior: floating border donuts grow/shrink, merge into larger donuts, and sometimes split back out into smaller moving donuts
 - Artifacts: dead/hot pixels, invert pixels, and medium dead/inverted chunk blocks

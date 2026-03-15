@@ -6,7 +6,7 @@
   <title>Alive Stream Border</title>
   <style>
     :root {
-      --border-size: clamp(24px, 2vw, 42px);
+      --border-size: clamp(30px, 2.3vw, 52px);
       --outer-color: #7f4dff;
       --mid-color: #a382ff;
       --inner-glow: rgba(170, 145, 255, 0.75);
@@ -58,6 +58,7 @@
         saturate(var(--sat))
         brightness(var(--bright))
         contrast(var(--contrast));
+      transition: filter 420ms cubic-bezier(0.25, 0.8, 0.25, 1);
     }
 
     .frame.shaking {
@@ -82,8 +83,11 @@
       filter: saturate(1.08) brightness(1.02);
       box-shadow:
         0 0 0 1px rgba(184, 164, 255, 0.45),
-        0 0 24px 2px rgba(155, 115, 255, 0.35),
-        inset 0 0 20px rgba(183, 149, 255, 0.28);
+        0 0 34px 4px rgba(155, 115, 255, 0.45),
+        0 0 56px 10px rgba(129, 86, 230, 0.22),
+        inset 0 0 24px rgba(183, 149, 255, 0.34),
+        inset 0 8px 14px rgba(245, 235, 255, 0.2),
+        inset 0 -8px 14px rgba(52, 24, 106, 0.24);
       animation: breathe 6.8s ease-in-out infinite;
       transform: translateY(var(--wave-y)) skewY(var(--wave-tilt));
     }
@@ -108,7 +112,7 @@
     .ring::after {
       border: 1px solid rgba(255, 255, 255, 0.4);
       box-shadow: inset 0 0 36px var(--inner-glow);
-      opacity: 0.65;
+      opacity: 0.74;
       animation: twitch 3.4s steps(7, end) infinite;
     }
 
@@ -373,18 +377,47 @@
 
     const rand = (min, max) => Math.random() * (max - min) + min;
     const pick = (items) => items[Math.floor(Math.random() * items.length)];
+    const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+    const sides = ['top', 'right', 'bottom', 'left'];
+    let sideCursor = 0;
+
+    function nextSide() {
+      if (Math.random() < 0.2) {
+        sideCursor = (sideCursor + 1) % sides.length;
+      }
+      const side = sides[sideCursor];
+      sideCursor = (sideCursor + 1) % sides.length;
+      return side;
+    }
 
     function borderPosition(size = 2) {
       const w = window.innerWidth;
       const h = window.innerHeight;
       const t = parseFloat(getComputedStyle(root).getPropertyValue('--border-size'));
-      const side = pick(['top', 'right', 'bottom', 'left']);
+      const side = nextSide();
       const jitter = rand(-8, 8);
 
-      if (side === 'top') return { x: rand(0, w - size), y: rand(0, t - size) + jitter };
-      if (side === 'bottom') return { x: rand(0, w - size), y: h - t + rand(0, t - size) + jitter };
-      if (side === 'left') return { x: rand(0, t - size) + jitter, y: rand(0, h - size) };
-      return { x: w - t + rand(0, t - size) + jitter, y: rand(0, h - size) };
+      let x;
+      let y;
+
+      if (side === 'top') {
+        x = rand(0, w - size);
+        y = rand(0, t - size) + jitter;
+      } else if (side === 'bottom') {
+        x = rand(0, w - size);
+        y = h - t + rand(0, t - size) + jitter;
+      } else if (side === 'left') {
+        x = rand(0, t - size) + jitter;
+        y = rand(0, h - size);
+      } else {
+        x = w - t + rand(0, t - size) + jitter;
+        y = rand(0, h - size);
+      }
+
+      return {
+        x: clamp(x, 0, w - size),
+        y: clamp(y, 0, h - size)
+      };
     }
 
     function spawnPixel() {
@@ -542,10 +575,10 @@
       root.style.setProperty('--rgb-shift', `${rand(-1.5, 1.5).toFixed(2)}px`);
       root.style.setProperty('--wave-y', `${rand(-1.8, 1.8).toFixed(2)}px`);
       root.style.setProperty('--wave-tilt', `${rand(-0.35, 0.35).toFixed(3)}deg`);
-      root.style.setProperty('--hue', `${rand(-8, 8).toFixed(2)}deg`);
-      root.style.setProperty('--sat', rand(0.96, 1.18).toFixed(3));
-      root.style.setProperty('--bright', rand(0.94, 1.08).toFixed(3));
-      root.style.setProperty('--contrast', rand(0.97, 1.14).toFixed(3));
+      root.style.setProperty('--hue', `${rand(-6, 6).toFixed(2)}deg`);
+      root.style.setProperty('--sat', rand(0.98, 1.14).toFixed(3));
+      root.style.setProperty('--bright', rand(0.96, 1.07).toFixed(3));
+      root.style.setProperty('--contrast', rand(0.98, 1.12).toFixed(3));
       root.style.setProperty('--donut-alpha', rand(0.5, 0.82).toFixed(3));
       root.style.setProperty('--chaos-boost', rand(0.95, 1.5).toFixed(3));
     }
@@ -599,8 +632,8 @@
       splitDonut();
       chaosPulse();
 
-      if (Math.random() < 0.62) moodShift();
-    }, 90);
+      if (Math.random() < 0.38) moodShift();
+    }, 120);
 
     setInterval(() => {
       if (pixelsLayer.childElementCount > 260) {
