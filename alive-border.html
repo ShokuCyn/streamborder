@@ -6,13 +6,19 @@
   <title>Alive Stream Border</title>
   <style>
     :root {
-      --border-size: clamp(22px, 1.75vw, 38px);
+      --border-size: clamp(24px, 2vw, 42px);
       --outer-color: #7f4dff;
-      --mid-color: #9f7aff;
+      --mid-color: #a382ff;
       --inner-glow: rgba(170, 145, 255, 0.75);
       --pulse: 1;
       --noise-shift: 0px;
       --flicker-alpha: 0.24;
+      --warp-x: 0px;
+      --warp-y: 0px;
+      --warp-rot: 0deg;
+      --warp-skew: 0deg;
+      --crt-vignette: 0.22;
+      --rgb-shift: 0px;
     }
 
     * { box-sizing: border-box; }
@@ -26,19 +32,24 @@
       font-family: "Segoe UI", system-ui, sans-serif;
     }
 
-    /* Wrapper is full transparent so gameplay/camera can show through. */
     .frame {
       position: fixed;
       inset: 0;
       pointer-events: none;
       isolation: isolate;
+      transform:
+        translate(var(--warp-x), var(--warp-y))
+        rotate(var(--warp-rot))
+        skewX(var(--warp-skew));
+      transform-origin: center;
+      animation: baselineWarp 6.5s ease-in-out infinite;
     }
 
     .ring {
       position: absolute;
       inset: 0;
       border: var(--border-size) solid var(--outer-color);
-      border-radius: 10px;
+      border-radius: 12px;
       opacity: calc(0.9 * var(--pulse));
       filter: saturate(1.08) brightness(1.02);
       box-shadow:
@@ -53,13 +64,13 @@
       content: "";
       position: absolute;
       inset: calc(-1 * var(--border-size));
-      border-radius: 12px;
+      border-radius: 14px;
       pointer-events: none;
     }
 
     .ring::before {
-      border: max(4px, calc(var(--border-size) * 0.3)) solid var(--mid-color);
-      opacity: 0.5;
+      border: max(4px, calc(var(--border-size) * 0.28)) solid var(--mid-color);
+      opacity: 0.55;
       mix-blend-mode: screen;
       animation: drift 5.5s linear infinite;
       transform: translateX(var(--noise-shift));
@@ -74,17 +85,21 @@
 
     .grain,
     .pixels,
-    .inverts {
+    .inverts,
+    .blocks,
+    .crt,
+    .scanline {
       position: absolute;
       inset: 0;
-      border-radius: 10px;
+      border-radius: 12px;
       overflow: hidden;
     }
 
-    /* Restrict effects to border area by masking center out. */
     .grain,
     .pixels,
     .inverts,
+    .blocks,
+    .crt,
     .scanline {
       -webkit-mask:
         linear-gradient(#000 0 0) content-box,
@@ -111,26 +126,61 @@
           rgba(0,0,0,0) 1px,
           rgba(0,0,0,0) 3px
         );
-      animation: staticJitter 550ms steps(3, end) infinite;
+      animation: staticJitter 540ms steps(3, end) infinite;
       mix-blend-mode: screen;
     }
 
     .scanline {
+      opacity: 0.28;
+      background:
+        linear-gradient(
+          to bottom,
+          transparent 0%,
+          rgba(255, 255, 255, 0.16) 45%,
+          rgba(220, 190, 255, 0.24) 50%,
+          transparent 100%
+        );
+      animation: scan 7.8s linear infinite;
+    }
+
+    .crt {
+      opacity: 0.42;
+      background:
+        repeating-linear-gradient(
+          0deg,
+          rgba(255,255,255,0.05) 0,
+          rgba(255,255,255,0.05) 1px,
+          rgba(0,0,0,0.06) 2px,
+          rgba(0,0,0,0.06) 3px
+        ),
+        radial-gradient(
+          ellipse at center,
+          rgba(255,255,255,0) 60%,
+          rgba(0,0,0,var(--crt-vignette)) 100%
+        );
+      animation: crtRoll 260ms steps(2, end) infinite;
+      mix-blend-mode: soft-light;
+    }
+
+    .rgb-ghost {
       position: absolute;
       inset: 0;
-      opacity: 0.3;
-      background: linear-gradient(
-        to bottom,
-        transparent 0%,
-        rgba(255, 255, 255, 0.18) 40%,
-        rgba(220, 190, 255, 0.22) 50%,
-        transparent 100%
-      );
-      animation: scan 8s linear infinite;
+      border-radius: 12px;
+      border: var(--border-size) solid rgba(140, 102, 255, 0.24);
+      filter: blur(1px);
+      transform: translateX(var(--rgb-shift));
+      mix-blend-mode: screen;
+      opacity: 0.5;
+    }
+
+    .pixel,
+    .invert,
+    .chunk {
+      position: absolute;
+      image-rendering: pixelated;
     }
 
     .pixel {
-      position: absolute;
       width: 2px;
       height: 2px;
       opacity: 0.85;
@@ -138,9 +188,7 @@
       box-shadow: 0 0 4px rgba(0, 0, 0, 0.45);
     }
 
-    .pixel.dead {
-      background: rgba(0, 0, 0, 0.95);
-    }
+    .pixel.dead { background: rgba(0, 0, 0, 0.95); }
 
     .pixel.hot {
       background: rgba(217, 191, 255, 0.95);
@@ -148,18 +196,39 @@
     }
 
     .invert {
-      position: absolute;
       width: 5px;
       height: 5px;
-      background: rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.86);
       mix-blend-mode: difference;
       opacity: 0.7;
       animation: blink 1800ms steps(2, end) infinite;
     }
 
+    .chunk {
+      border-radius: 1px;
+      opacity: 0.8;
+      animation: blockDecay 1200ms linear forwards;
+    }
+
+    .chunk.dead {
+      background: rgba(0, 0, 0, 0.96);
+      box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.08);
+    }
+
+    .chunk.invert {
+      background: rgba(255, 255, 255, 0.9);
+      mix-blend-mode: difference;
+    }
+
     @keyframes breathe {
       0%, 100% { filter: saturate(1.06) brightness(1); }
-      50% { filter: saturate(1.18) brightness(1.08); }
+      50% { filter: saturate(1.2) brightness(1.09); }
+    }
+
+    @keyframes baselineWarp {
+      0%, 100% { transform: translate(0, 0) rotate(0deg) skewX(0deg); }
+      40% { transform: translate(0.3px, -0.4px) rotate(-0.05deg) skewX(0.06deg); }
+      55% { transform: translate(-0.35px, 0.2px) rotate(0.03deg) skewX(-0.08deg); }
     }
 
     @keyframes drift {
@@ -170,8 +239,8 @@
 
     @keyframes staticJitter {
       0% { transform: translate(0, 0); }
-      30% { transform: translate(0.5px, -0.6px); }
-      60% { transform: translate(-0.8px, 0.3px); }
+      30% { transform: translate(0.6px, -0.6px); }
+      60% { transform: translate(-0.9px, 0.35px); }
       100% { transform: translate(0, 0); }
     }
 
@@ -188,27 +257,43 @@
       to { transform: translateY(100%); }
     }
 
+    @keyframes crtRoll {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(0.5px); }
+      100% { transform: translateY(0); }
+    }
+
     @keyframes blink {
       0%, 15%, 100% { opacity: 0.72; }
       16%, 18% { opacity: 0.08; }
       19%, 22% { opacity: 0.68; }
       23%, 30% { opacity: 0.16; }
     }
+
+    @keyframes blockDecay {
+      0% { opacity: 0.86; filter: blur(0px); }
+      100% { opacity: 0.05; filter: blur(0.4px); }
+    }
   </style>
 </head>
 <body>
-  <main class="frame" aria-hidden="true">
+  <main class="frame" id="frame" aria-hidden="true">
     <div class="ring"></div>
+    <div class="rgb-ghost"></div>
     <div class="grain"></div>
+    <div class="crt"></div>
     <div class="scanline"></div>
     <div class="pixels" id="pixels"></div>
     <div class="inverts" id="inverts"></div>
+    <div class="blocks" id="blocks"></div>
   </main>
 
   <script>
     const root = document.documentElement;
+    const frame = document.getElementById('frame');
     const pixelsLayer = document.getElementById('pixels');
     const invertLayer = document.getElementById('inverts');
+    const blocksLayer = document.getElementById('blocks');
 
     const rand = (min, max) => Math.random() * (max - min) + min;
     const pick = (items) => items[Math.floor(Math.random() * items.length)];
@@ -218,7 +303,7 @@
       const h = window.innerHeight;
       const t = parseFloat(getComputedStyle(root).getPropertyValue('--border-size'));
       const side = pick(['top', 'right', 'bottom', 'left']);
-      const jitter = rand(-4, 4);
+      const jitter = rand(-6, 6);
 
       if (side === 'top') return { x: rand(0, w - size), y: rand(0, t - size) + jitter };
       if (side === 'bottom') return { x: rand(0, w - size), y: h - t + rand(0, t - size) + jitter };
@@ -228,8 +313,8 @@
 
     function spawnPixel() {
       const dot = document.createElement('span');
-      dot.className = `pixel ${Math.random() < 0.22 ? 'hot' : Math.random() < 0.55 ? 'dead' : ''}`.trim();
-      const size = Math.random() < 0.1 ? 3 : 2;
+      dot.className = `pixel ${Math.random() < 0.22 ? 'hot' : Math.random() < 0.58 ? 'dead' : ''}`.trim();
+      const size = Math.random() < 0.14 ? 3 : 2;
       const p = borderPosition(size);
 
       dot.style.width = `${size}px`;
@@ -239,48 +324,95 @@
       dot.style.opacity = String(rand(0.35, 0.95));
       pixelsLayer.appendChild(dot);
 
-      const life = rand(250, 1500);
-      setTimeout(() => dot.remove(), life);
+      setTimeout(() => dot.remove(), rand(220, 1300));
     }
 
     function spawnInvert() {
-      if (Math.random() > 0.58) return;
+      if (Math.random() > 0.62) return;
       const block = document.createElement('span');
       block.className = 'invert';
-      const size = pick([3, 4, 5, 6]);
+      const size = pick([3, 4, 5, 6, 7, 8]);
       const p = borderPosition(size);
 
       block.style.width = `${size}px`;
       block.style.height = `${size}px`;
       block.style.left = `${p.x}px`;
       block.style.top = `${p.y}px`;
-      block.style.animationDuration = `${rand(1100, 2600)}ms`;
+      block.style.animationDuration = `${rand(1000, 2300)}ms`;
       invertLayer.appendChild(block);
 
-      setTimeout(() => block.remove(), rand(450, 1800));
+      setTimeout(() => block.remove(), rand(400, 1600));
+    }
+
+    function spawnChunk() {
+      if (Math.random() > 0.48) return;
+      const block = document.createElement('span');
+      const kind = Math.random() < 0.5 ? 'dead' : 'invert';
+      block.className = `chunk ${kind}`;
+
+      const sizeW = pick([8, 10, 12, 14, 16, 20, 24, 30]);
+      const sizeH = pick([6, 8, 10, 12, 14, 16, 18]);
+      const p = borderPosition(Math.max(sizeW, sizeH));
+
+      block.style.width = `${sizeW}px`;
+      block.style.height = `${sizeH}px`;
+      block.style.left = `${p.x}px`;
+      block.style.top = `${p.y}px`;
+      block.style.transform = `skew(${rand(-4, 4).toFixed(2)}deg, ${rand(-2, 2).toFixed(2)}deg)`;
+      blocksLayer.appendChild(block);
+
+      setTimeout(() => block.remove(), rand(500, 1800));
     }
 
     function moodShift() {
-      root.style.setProperty('--pulse', rand(0.92, 1.08).toFixed(3));
-      root.style.setProperty('--noise-shift', `${rand(-1.4, 1.4).toFixed(2)}px`);
-      root.style.setProperty('--flicker-alpha', rand(0.15, 0.3).toFixed(3));
+      root.style.setProperty('--pulse', rand(0.9, 1.11).toFixed(3));
+      root.style.setProperty('--noise-shift', `${rand(-1.8, 1.8).toFixed(2)}px`);
+      root.style.setProperty('--flicker-alpha', rand(0.15, 0.34).toFixed(3));
+      root.style.setProperty('--crt-vignette', rand(0.18, 0.3).toFixed(3));
+      root.style.setProperty('--rgb-shift', `${rand(-1.4, 1.4).toFixed(2)}px`);
+    }
+
+    function warpPulse() {
+      if (Math.random() > 0.2) return;
+      root.style.setProperty('--warp-x', `${rand(-2, 2).toFixed(2)}px`);
+      root.style.setProperty('--warp-y', `${rand(-1.5, 1.5).toFixed(2)}px`);
+      root.style.setProperty('--warp-rot', `${rand(-0.35, 0.35).toFixed(3)}deg`);
+      root.style.setProperty('--warp-skew', `${rand(-0.7, 0.7).toFixed(3)}deg`);
+
+      frame.style.filter = `contrast(${rand(1.02, 1.08).toFixed(3)}) brightness(${rand(0.96, 1.05).toFixed(3)})`;
+      setTimeout(() => {
+        root.style.setProperty('--warp-x', '0px');
+        root.style.setProperty('--warp-y', '0px');
+        root.style.setProperty('--warp-rot', '0deg');
+        root.style.setProperty('--warp-skew', '0deg');
+        frame.style.filter = '';
+      }, rand(120, 420));
     }
 
     setInterval(() => {
-      const burst = Math.floor(rand(2, 8));
+      const burst = Math.floor(rand(3, 11));
       for (let i = 0; i < burst; i++) spawnPixel();
+
+      const chunkBursts = Math.floor(rand(0, 4));
+      for (let i = 0; i < chunkBursts; i++) spawnChunk();
+
       spawnInvert();
-      if (Math.random() < 0.3) moodShift();
-    }, 120);
+      warpPulse();
+
+      if (Math.random() < 0.36) moodShift();
+    }, 110);
 
     setInterval(() => {
-      if (pixelsLayer.childElementCount > 220) {
-        [...pixelsLayer.children].slice(0, 45).forEach(el => el.remove());
+      if (pixelsLayer.childElementCount > 280) {
+        [...pixelsLayer.children].slice(0, 70).forEach(el => el.remove());
       }
-      if (invertLayer.childElementCount > 45) {
-        [...invertLayer.children].slice(0, 10).forEach(el => el.remove());
+      if (invertLayer.childElementCount > 60) {
+        [...invertLayer.children].slice(0, 14).forEach(el => el.remove());
       }
-    }, 800);
+      if (blocksLayer.childElementCount > 90) {
+        [...blocksLayer.children].slice(0, 20).forEach(el => el.remove());
+      }
+    }, 700);
 
     window.addEventListener('resize', moodShift);
     moodShift();
