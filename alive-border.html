@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alive Stream Border</title>
+  <style>
+    :root {
+      --border-size: clamp(24px, 2vw, 42px);
+      --outer-color: #7f4dff;
+      --mid-color: #a382ff;
+      --inner-glow: rgba(170, 145, 255, 0.75);
+      --pulse: 1;
+      --noise-shift: 0px;
+      --flicker-alpha: 0.24;
+      --warp-x: 0px;
+      --warp-y: 0px;
+      --warp-rot: 0deg;
+      --warp-skew: 0deg;
+      --crt-vignette: 0.22;
+      --rgb-shift: 0px;
+      --hue: 0deg;
+      --sat: 1;
+      --bright: 1;
+      --contrast: 1;
+      --wave-y: 0px;
+      --wave-tilt: 0deg;
+      --bar-opacity: 0;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      background: transparent;
+      overflow: hidden;
+      font-family: "Segoe UI", system-ui, sans-serif;
+    }
+
+    .frame {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      isolation: isolate;
+      transform:
+        translate(var(--warp-x), var(--warp-y))
+        rotate(var(--warp-rot))
+        skewX(var(--warp-skew));
+      transform-origin: center;
+      animation: baselineWarp 6.5s ease-in-out infinite;
+      filter:
+        hue-rotate(var(--hue))
+        saturate(var(--sat))
+        brightness(var(--bright))
+        contrast(var(--contrast));
+    }
+
+    .frame.shaking {
+      animation: shakeBurst 95ms steps(2, end) infinite;
+    }
+
+    .ring {
+      position: absolute;
+      inset: 0;
+      border: var(--border-size) solid var(--outer-color);
+      border-radius: 12px;
+      opacity: calc(0.9 * var(--pulse));
+      filter: saturate(1.08) brightness(1.02);
+      box-shadow:
+        0 0 0 1px rgba(184, 164, 255, 0.45),
+        0 0 24px 2px rgba(155, 115, 255, 0.35),
+        inset 0 0 20px rgba(183, 149, 255, 0.28);
+      animation: breathe 5.8s ease-in-out infinite;
+      transform: translateY(var(--wave-y)) skewY(var(--wave-tilt));
+    }
+
+    .ring::before,
+    .ring::after {
+      content: "";
+      position: absolute;
+      inset: calc(-1 * var(--border-size));
+      border-radius: 14px;
+      pointer-events: none;
+    }
+
+    .ring::before {
+      border: max(4px, calc(var(--border-size) * 0.28)) solid var(--mid-color);
+      opacity: 0.55;
+      mix-blend-mode: screen;
+      animation: drift 3.8s linear infinite;
+      transform: translateX(var(--noise-shift));
+    }
+
+    .ring::after {
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow: inset 0 0 36px var(--inner-glow);
+      opacity: 0.65;
+      animation: twitch 2.4s steps(7, end) infinite;
+    }
+
+    .grain,
+    .pixels,
+    .inverts,
+    .blocks,
+    .crt,
+    .scanline,
+    .wave-overlay {
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .grain,
+    .pixels,
+    .inverts,
+    .blocks,
+    .crt,
+    .scanline,
+    .wave-overlay {
+      -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+      padding: calc(var(--border-size) - 2px);
+    }
+
+    .grain {
+      opacity: var(--flicker-alpha);
+      background:
+        repeating-linear-gradient(
+          0deg,
+          rgba(255,255,255,0.17) 0px,
+          rgba(255,255,255,0.17) 1px,
+          rgba(0,0,0,0) 2px,
+          rgba(0,0,0,0) 4px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          rgba(197,161,255,0.17) 0px,
+          rgba(197,161,255,0.17) 1px,
+          rgba(0,0,0,0) 1px,
+          rgba(0,0,0,0) 3px
+        );
+      animation: staticJitter 340ms steps(4, end) infinite;
+      mix-blend-mode: screen;
+    }
+
+    .scanline {
+      opacity: 0.35;
+      background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(255, 255, 255, 0.14) 42%,
+        rgba(220, 190, 255, 0.3) 49%,
+        transparent 100%
+      );
+      animation: scan 6.8s linear infinite;
+    }
+
+    .crt {
+      opacity: 0.44;
+      background:
+        repeating-linear-gradient(
+          0deg,
+          rgba(255,255,255,0.07) 0,
+          rgba(255,255,255,0.07) 1px,
+          rgba(0,0,0,0.06) 2px,
+          rgba(0,0,0,0.06) 3px
+        ),
+        radial-gradient(
+          ellipse at center,
+          rgba(255,255,255,0) 56%,
+          rgba(0,0,0,var(--crt-vignette)) 100%
+        );
+      animation: crtRoll 180ms steps(2, end) infinite;
+      mix-blend-mode: soft-light;
+    }
+
+    .wave-overlay {
+      opacity: 0.32;
+      background:
+        repeating-linear-gradient(
+          -17deg,
+          rgba(255,255,255,0.07) 0,
+          rgba(255,255,255,0.07) 2px,
+          rgba(0,0,0,0) 4px,
+          rgba(0,0,0,0) 8px
+        );
+      animation: waveRun 2.8s linear infinite;
+      mix-blend-mode: overlay;
+    }
+
+    .rgb-ghost {
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      border: var(--border-size) solid rgba(140, 102, 255, 0.26);
+      filter: blur(1px);
+      transform: translateX(var(--rgb-shift)) translateY(calc(var(--wave-y) * -0.35));
+      mix-blend-mode: screen;
+      opacity: 0.56;
+    }
+
+    .pixel,
+    .invert,
+    .chunk {
+      position: absolute;
+      image-rendering: pixelated;
+    }
+
+    .pixel {
+      width: 2px;
+      height: 2px;
+      opacity: 0.85;
+      background: rgba(10, 10, 14, 0.9);
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.45);
+    }
+
+    .pixel.dead { background: rgba(0, 0, 0, 0.95); }
+
+    .pixel.hot {
+      background: rgba(217, 191, 255, 0.95);
+      box-shadow: 0 0 7px rgba(193, 156, 255, 0.55);
+    }
+
+    .invert {
+      width: 5px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.86);
+      mix-blend-mode: difference;
+      opacity: 0.75;
+      animation: blink 1300ms steps(2, end) infinite;
+    }
+
+    .chunk {
+      border-radius: 1px;
+      opacity: 0.8;
+      animation: blockDecay 1200ms linear forwards;
+    }
+
+    .chunk.dead {
+      background: rgba(0, 0, 0, 0.96);
+      box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.08);
+    }
+
+    .chunk.invert {
+      background: rgba(255, 255, 255, 0.9);
+      mix-blend-mode: difference;
+    }
+
+    .broadcast-fail {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: var(--bar-opacity);
+      transition: opacity 80ms linear;
+      mix-blend-mode: screen;
+    }
+
+    .bars {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to right,
+        #ffffff 0%, #ffffff 14.2%,
+        #ffd34d 14.2%, #ffd34d 28.4%,
+        #4dffd9 28.4%, #4dffd9 42.6%,
+        #58b2ff 42.6%, #58b2ff 56.8%,
+        #bf64ff 56.8%, #bf64ff 71%,
+        #ff5f7f 71%, #ff5f7f 85.2%,
+        #1b1b1b 85.2%, #1b1b1b 100%
+      );
+      opacity: 0.8;
+      filter: contrast(1.1) saturate(1.25);
+      transform: scale(1.02) skewX(-0.7deg);
+    }
+
+    .bars::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        repeating-linear-gradient(
+          0deg,
+          rgba(255,255,255,0.12) 0,
+          rgba(255,255,255,0.12) 1px,
+          rgba(0,0,0,0.16) 2px,
+          rgba(0,0,0,0.16) 3px
+        );
+      mix-blend-mode: multiply;
+      animation: crtRoll 140ms steps(2, end) infinite;
+    }
+
+    .bars-label {
+      position: absolute;
+      right: 2.2vw;
+      bottom: 3vh;
+      color: rgba(255, 255, 255, 0.92);
+      letter-spacing: 0.2em;
+      font-weight: 700;
+      font-size: clamp(14px, 1.2vw, 28px);
+      text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+      opacity: 0.8;
+    }
+
+    @keyframes breathe {
+      0%, 100% { filter: saturate(1.02) brightness(0.98); }
+      50% { filter: saturate(1.26) brightness(1.1); }
+    }
+
+    @keyframes baselineWarp {
+      0%, 100% { transform: translate(0, 0) rotate(0deg) skewX(0deg); }
+      35% { transform: translate(0.35px, -0.4px) rotate(-0.08deg) skewX(0.08deg); }
+      58% { transform: translate(-0.45px, 0.22px) rotate(0.05deg) skewX(-0.11deg); }
+    }
+
+    @keyframes shakeBurst {
+      0% { transform: translate(-1px, 0.5px) rotate(-0.14deg); }
+      25% { transform: translate(1.2px, -0.8px) rotate(0.12deg); }
+      50% { transform: translate(-0.8px, -1px) rotate(-0.1deg); }
+      75% { transform: translate(1px, 0.8px) rotate(0.09deg); }
+      100% { transform: translate(0, 0) rotate(0deg); }
+    }
+
+    @keyframes drift {
+      0% { transform: translateX(-1.4px); }
+      50% { transform: translateX(1.8px); }
+      100% { transform: translateX(-1.4px); }
+    }
+
+    @keyframes staticJitter {
+      0% { transform: translate(0, 0); }
+      30% { transform: translate(0.7px, -0.8px); }
+      60% { transform: translate(-1.1px, 0.4px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    @keyframes twitch {
+      0%, 100% { opacity: 0.7; }
+      25% { opacity: 0.4; }
+      26% { opacity: 0.82; }
+      52% { opacity: 0.48; }
+      53% { opacity: 0.78; }
+    }
+
+    @keyframes scan {
+      from { transform: translateY(-100%); }
+      to { transform: translateY(100%); }
+    }
+
+    @keyframes crtRoll {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(0.8px); }
+      100% { transform: translateY(0); }
+    }
+
+    @keyframes waveRun {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(30px); }
+    }
+
+    @keyframes blink {
+      0%, 15%, 100% { opacity: 0.76; }
+      16%, 18% { opacity: 0.08; }
+      19%, 22% { opacity: 0.74; }
+      23%, 30% { opacity: 0.1; }
+    }
+
+    @keyframes blockDecay {
+      0% { opacity: 0.9; filter: blur(0px); }
+      100% { opacity: 0.05; filter: blur(0.5px); }
+    }
+  </style>
+</head>
+<body>
+  <main class="frame" id="frame" aria-hidden="true">
+    <div class="ring"></div>
+    <div class="rgb-ghost"></div>
+    <div class="grain"></div>
+    <div class="crt"></div>
+    <div class="scanline"></div>
+    <div class="wave-overlay"></div>
+    <div class="pixels" id="pixels"></div>
+    <div class="inverts" id="inverts"></div>
+    <div class="blocks" id="blocks"></div>
+  </main>
+
+  <div class="broadcast-fail" id="broadcastFail" aria-hidden="true">
+    <div class="bars"></div>
+    <div class="bars-label">NO SIGNAL</div>
+  </div>
+
+  <script>
+    const root = document.documentElement;
+    const frame = document.getElementById('frame');
+    const broadcastFail = document.getElementById('broadcastFail');
+    const pixelsLayer = document.getElementById('pixels');
+    const invertLayer = document.getElementById('inverts');
+    const blocksLayer = document.getElementById('blocks');
+
+    const rand = (min, max) => Math.random() * (max - min) + min;
+    const pick = (items) => items[Math.floor(Math.random() * items.length)];
+
+    function borderPosition(size = 2) {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const t = parseFloat(getComputedStyle(root).getPropertyValue('--border-size'));
+      const side = pick(['top', 'right', 'bottom', 'left']);
+      const jitter = rand(-8, 8);
+
+      if (side === 'top') return { x: rand(0, w - size), y: rand(0, t - size) + jitter };
+      if (side === 'bottom') return { x: rand(0, w - size), y: h - t + rand(0, t - size) + jitter };
+      if (side === 'left') return { x: rand(0, t - size) + jitter, y: rand(0, h - size) };
+      return { x: w - t + rand(0, t - size) + jitter, y: rand(0, h - size) };
+    }
+
+    function spawnPixel() {
+      const dot = document.createElement('span');
+      dot.className = `pixel ${Math.random() < 0.2 ? 'hot' : Math.random() < 0.65 ? 'dead' : ''}`.trim();
+      const size = Math.random() < 0.2 ? 3 : 2;
+      const p = borderPosition(size);
+
+      dot.style.width = `${size}px`;
+      dot.style.height = `${size}px`;
+      dot.style.left = `${p.x}px`;
+      dot.style.top = `${p.y}px`;
+      dot.style.opacity = String(rand(0.35, 0.98));
+      pixelsLayer.appendChild(dot);
+
+      setTimeout(() => dot.remove(), rand(200, 1100));
+    }
+
+    function spawnInvert() {
+      if (Math.random() > 0.68) return;
+      const block = document.createElement('span');
+      block.className = 'invert';
+      const size = pick([4, 5, 6, 7, 8, 9, 10]);
+      const p = borderPosition(size);
+
+      block.style.width = `${size}px`;
+      block.style.height = `${size}px`;
+      block.style.left = `${p.x}px`;
+      block.style.top = `${p.y}px`;
+      block.style.animationDuration = `${rand(800, 1800)}ms`;
+      invertLayer.appendChild(block);
+
+      setTimeout(() => block.remove(), rand(350, 1400));
+    }
+
+    function spawnChunk() {
+      if (Math.random() > 0.62) return;
+      const block = document.createElement('span');
+      const kind = Math.random() < 0.5 ? 'dead' : 'invert';
+      block.className = `chunk ${kind}`;
+
+      const sizeW = pick([12, 16, 20, 24, 28, 34, 40, 56, 72]);
+      const sizeH = pick([8, 12, 16, 20, 24, 28, 32]);
+      const p = borderPosition(Math.max(sizeW, sizeH));
+
+      block.style.width = `${sizeW}px`;
+      block.style.height = `${sizeH}px`;
+      block.style.left = `${p.x}px`;
+      block.style.top = `${p.y}px`;
+      block.style.transform = `skew(${rand(-8, 8).toFixed(2)}deg, ${rand(-5, 5).toFixed(2)}deg)`;
+      blocksLayer.appendChild(block);
+
+      setTimeout(() => block.remove(), rand(450, 1600));
+    }
+
+    function moodShift() {
+      root.style.setProperty('--pulse', rand(0.84, 1.2).toFixed(3));
+      root.style.setProperty('--noise-shift', `${rand(-2.2, 2.2).toFixed(2)}px`);
+      root.style.setProperty('--flicker-alpha', rand(0.16, 0.42).toFixed(3));
+      root.style.setProperty('--crt-vignette', rand(0.16, 0.36).toFixed(3));
+      root.style.setProperty('--rgb-shift', `${rand(-2.4, 2.4).toFixed(2)}px`);
+      root.style.setProperty('--wave-y', `${rand(-3, 3).toFixed(2)}px`);
+      root.style.setProperty('--wave-tilt', `${rand(-0.6, 0.6).toFixed(3)}deg`);
+      root.style.setProperty('--hue', `${rand(-15, 15).toFixed(2)}deg`);
+      root.style.setProperty('--sat', rand(0.95, 1.38).toFixed(3));
+      root.style.setProperty('--bright', rand(0.88, 1.15).toFixed(3));
+      root.style.setProperty('--contrast', rand(0.95, 1.28).toFixed(3));
+    }
+
+    function warpPulse() {
+      if (Math.random() > 0.26) return;
+      root.style.setProperty('--warp-x', `${rand(-3.2, 3.2).toFixed(2)}px`);
+      root.style.setProperty('--warp-y', `${rand(-2.4, 2.4).toFixed(2)}px`);
+      root.style.setProperty('--warp-rot', `${rand(-0.65, 0.65).toFixed(3)}deg`);
+      root.style.setProperty('--warp-skew', `${rand(-1.5, 1.5).toFixed(3)}deg`);
+
+      frame.style.filter = `hue-rotate(${rand(-34, 34).toFixed(1)}deg) saturate(${rand(0.9, 1.5).toFixed(2)}) brightness(${rand(0.8, 1.2).toFixed(2)}) contrast(${rand(0.95, 1.35).toFixed(2)})`;
+      frame.classList.add('shaking');
+
+      setTimeout(() => {
+        root.style.setProperty('--warp-x', '0px');
+        root.style.setProperty('--warp-y', '0px');
+        root.style.setProperty('--warp-rot', '0deg');
+        root.style.setProperty('--warp-skew', '0deg');
+        frame.style.filter = '';
+        frame.classList.remove('shaking');
+      }, rand(120, 420));
+    }
+
+    function triggerColorBars() {
+      if (Math.random() > 0.07) return;
+      const flashes = Math.floor(rand(1, 4));
+      let count = 0;
+
+      const flash = () => {
+        const alpha = rand(0.36, 0.84).toFixed(2);
+        root.style.setProperty('--bar-opacity', alpha);
+        broadcastFail.style.transform = `translate(${rand(-3, 3).toFixed(2)}px, ${rand(-2, 2).toFixed(2)}px)`;
+
+        setTimeout(() => {
+          root.style.setProperty('--bar-opacity', '0');
+          broadcastFail.style.transform = 'translate(0, 0)';
+          count += 1;
+          if (count < flashes) setTimeout(flash, rand(60, 240));
+        }, rand(70, 220));
+      };
+
+      flash();
+    }
+
+    setInterval(() => {
+      const burst = Math.floor(rand(4, 14));
+      for (let i = 0; i < burst; i++) spawnPixel();
+
+      const chunkBursts = Math.floor(rand(1, 5));
+      for (let i = 0; i < chunkBursts; i++) spawnChunk();
+
+      spawnInvert();
+      warpPulse();
+      triggerColorBars();
+
+      if (Math.random() < 0.5) moodShift();
+    }, 95);
+
+    setInterval(() => {
+      if (pixelsLayer.childElementCount > 360) {
+        [...pixelsLayer.children].slice(0, 110).forEach((el) => el.remove());
+      }
+      if (invertLayer.childElementCount > 95) {
+        [...invertLayer.children].slice(0, 30).forEach((el) => el.remove());
+      }
+      if (blocksLayer.childElementCount > 120) {
+        [...blocksLayer.children].slice(0, 45).forEach((el) => el.remove());
+      }
+    }, 620);
+
+    window.addEventListener('resize', moodShift);
+    moodShift();
+  </script>
+</body>
+</html>
