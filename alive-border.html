@@ -10,6 +10,11 @@
       --outer-color: #7f4dff;
       --mid-color: #a382ff;
       --inner-glow: rgba(170, 145, 255, 0.75);
+      --w95-face: #c0c0c0;
+      --w95-light: #ffffff;
+      --w95-mid: #808080;
+      --w95-dark: #202020;
+      --w95-blue: #000080;
       --pulse: 1;
       --noise-shift: 0px;
       --flicker-alpha: 0.24;
@@ -83,6 +88,10 @@
       filter: saturate(1.08) brightness(1.02);
       box-shadow:
         0 0 0 1px rgba(184, 164, 255, 0.45),
+        inset 1px 1px 0 rgba(255,255,255,0.95),
+        inset -1px -1px 0 rgba(32,32,32,0.9),
+        inset 3px 3px 0 rgba(192,192,192,0.4),
+        inset -3px -3px 0 rgba(128,128,128,0.35),
         0 0 34px 4px rgba(155, 115, 255, 0.45),
         0 0 56px 10px rgba(129, 86, 230, 0.22),
         inset 0 0 24px rgba(183, 149, 255, 0.34),
@@ -110,11 +119,56 @@
     }
 
     .ring::after {
-      border: 1px solid rgba(255, 255, 255, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.45);
       box-shadow: inset 0 0 36px var(--inner-glow);
       opacity: 0.74;
       animation: twitch 3.4s steps(7, end) infinite;
     }
+
+    .w95-accent {
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+      padding: calc(var(--border-size) - 2px);
+      pointer-events: none;
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.7),
+        inset 2px 2px 0 rgba(255, 255, 255, 0.9),
+        inset -2px -2px 0 rgba(32, 32, 32, 0.85),
+        inset 4px 4px 0 rgba(192, 192, 192, 0.35),
+        inset -4px -4px 0 rgba(128, 128, 128, 0.28);
+      opacity: 0.58;
+      mix-blend-mode: soft-light;
+    }
+
+    .w95-corners {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .w95-corners::before,
+    .w95-corners::after {
+      content: "";
+      position: absolute;
+      width: calc(var(--border-size) * 0.9);
+      height: calc(var(--border-size) * 0.52);
+      background: linear-gradient(to right, rgba(0, 0, 128, 0.9), rgba(64, 64, 184, 0.72));
+      border-top: 1px solid rgba(255,255,255,0.75);
+      border-left: 1px solid rgba(255,255,255,0.75);
+      border-right: 1px solid rgba(32,32,32,0.7);
+      border-bottom: 1px solid rgba(32,32,32,0.7);
+      opacity: 0.55;
+      filter: blur(0.1px);
+    }
+
+    .w95-corners::before { top: 0; left: 0; }
+    .w95-corners::after { bottom: 0; right: 0; transform: rotate(180deg); }
 
     .grain,
     .pixels,
@@ -356,6 +410,8 @@
 <body>
   <main class="frame" id="frame" aria-hidden="true">
     <div class="ring"></div>
+    <div class="w95-accent"></div>
+    <div class="w95-corners"></div>
     <div class="rgb-ghost"></div>
     <div class="grain"></div>
     <div class="crt"></div>
