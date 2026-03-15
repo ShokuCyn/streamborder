@@ -1,19 +1,19 @@
 # Alive Stream Border
 
-This repository includes an intentionally chaotic browser-source border for Streamlabs:
+This repository includes a creepy animated browser-source border for Streamlabs:
 
 - File: `alive-border.html`
 - Resolution target: 1920x1080 (scales to window size)
 - Base look: chunkier purple frame inspired by `stream border.png`
-- Mood: unstable CRT / glitch / creepypasta energy
+- Mood: unstable CRT / glitch / creepypasta energy (dialed back from full-chaos mode)
 
 ## Effect highlights
 
-- Motion stack: shaking bursts, slight rotation/skew warp pulses, micro-jitter, and breathing pulse
-- Color abuse: randomized hue/saturation/brightness/contrast shifts and RGB ghost offsets
+- Motion stack: occasional shake bursts, slight rotation/skew warp pulses, micro-jitter, and breathing pulse
+- Color drift: randomized hue/saturation/brightness/contrast shifts and RGB ghost offsets
 - CRT damage: rolling scanline, TV-line texture, vignette darkening, and wave-like distortion
-- Artifact spam: dead/hot pixels, invert pixels, and larger dead/inverted chunk blocks
-- Channel-dead interruptions: occasional old-TV color bars with NO SIGNAL flashes
+- Artifacts: dead/hot pixels, invert pixels, and medium dead/inverted chunk blocks
+- Signal interruptions: intermittent NO SIGNAL text flashes (no full-screen color bars)
 
 ## Streamlabs setup
 

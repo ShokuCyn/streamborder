@@ -58,7 +58,7 @@
     }
 
     .frame.shaking {
-      animation: shakeBurst 95ms steps(2, end) infinite;
+      animation: shakeBurst 130ms steps(2, end) infinite;
     }
 
     .ring {
@@ -72,7 +72,7 @@
         0 0 0 1px rgba(184, 164, 255, 0.45),
         0 0 24px 2px rgba(155, 115, 255, 0.35),
         inset 0 0 20px rgba(183, 149, 255, 0.28);
-      animation: breathe 5.8s ease-in-out infinite;
+      animation: breathe 6.8s ease-in-out infinite;
       transform: translateY(var(--wave-y)) skewY(var(--wave-tilt));
     }
 
@@ -89,7 +89,7 @@
       border: max(4px, calc(var(--border-size) * 0.28)) solid var(--mid-color);
       opacity: 0.55;
       mix-blend-mode: screen;
-      animation: drift 3.8s linear infinite;
+      animation: drift 4.8s linear infinite;
       transform: translateX(var(--noise-shift));
     }
 
@@ -97,7 +97,7 @@
       border: 1px solid rgba(255, 255, 255, 0.4);
       box-shadow: inset 0 0 36px var(--inner-glow);
       opacity: 0.65;
-      animation: twitch 2.4s steps(7, end) infinite;
+      animation: twitch 3.4s steps(7, end) infinite;
     }
 
     .grain,
@@ -145,12 +145,12 @@
           rgba(0,0,0,0) 1px,
           rgba(0,0,0,0) 3px
         );
-      animation: staticJitter 340ms steps(4, end) infinite;
+      animation: staticJitter 540ms steps(3, end) infinite;
       mix-blend-mode: screen;
     }
 
     .scanline {
-      opacity: 0.35;
+      opacity: 0.28;
       background: linear-gradient(
         to bottom,
         transparent 0%,
@@ -158,11 +158,11 @@
         rgba(220, 190, 255, 0.3) 49%,
         transparent 100%
       );
-      animation: scan 6.8s linear infinite;
+      animation: scan 8.6s linear infinite;
     }
 
     .crt {
-      opacity: 0.44;
+      opacity: 0.3;
       background:
         repeating-linear-gradient(
           0deg,
@@ -176,12 +176,12 @@
           rgba(255,255,255,0) 56%,
           rgba(0,0,0,var(--crt-vignette)) 100%
         );
-      animation: crtRoll 180ms steps(2, end) infinite;
+      animation: crtRoll 260ms steps(2, end) infinite;
       mix-blend-mode: soft-light;
     }
 
     .wave-overlay {
-      opacity: 0.32;
+      opacity: 0.2;
       background:
         repeating-linear-gradient(
           -17deg,
@@ -190,7 +190,7 @@
           rgba(0,0,0,0) 4px,
           rgba(0,0,0,0) 8px
         );
-      animation: waveRun 2.8s linear infinite;
+      animation: waveRun 4.2s linear infinite;
       mix-blend-mode: overlay;
     }
 
@@ -202,7 +202,7 @@
       filter: blur(1px);
       transform: translateX(var(--rgb-shift)) translateY(calc(var(--wave-y) * -0.35));
       mix-blend-mode: screen;
-      opacity: 0.56;
+      opacity: 0.42;
     }
 
     .pixel,
@@ -233,7 +233,7 @@
       background: rgba(255, 255, 255, 0.86);
       mix-blend-mode: difference;
       opacity: 0.75;
-      animation: blink 1300ms steps(2, end) infinite;
+      animation: blink 1800ms steps(2, end) infinite;
     }
 
     .chunk {
@@ -252,77 +252,42 @@
       mix-blend-mode: difference;
     }
 
-    .broadcast-fail {
+    .signal-fail {
       position: fixed;
-      inset: 0;
+      left: 50%;
+      top: 7.5%;
+      transform: translateX(-50%);
       pointer-events: none;
       opacity: var(--bar-opacity);
-      transition: opacity 80ms linear;
-      mix-blend-mode: screen;
-    }
-
-    .bars {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(
-        to right,
-        #ffffff 0%, #ffffff 14.2%,
-        #ffd34d 14.2%, #ffd34d 28.4%,
-        #4dffd9 28.4%, #4dffd9 42.6%,
-        #58b2ff 42.6%, #58b2ff 56.8%,
-        #bf64ff 56.8%, #bf64ff 71%,
-        #ff5f7f 71%, #ff5f7f 85.2%,
-        #1b1b1b 85.2%, #1b1b1b 100%
-      );
-      opacity: 0.8;
-      filter: contrast(1.1) saturate(1.25);
-      transform: scale(1.02) skewX(-0.7deg);
-    }
-
-    .bars::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background:
-        repeating-linear-gradient(
-          0deg,
-          rgba(255,255,255,0.12) 0,
-          rgba(255,255,255,0.12) 1px,
-          rgba(0,0,0,0.16) 2px,
-          rgba(0,0,0,0.16) 3px
-        );
-      mix-blend-mode: multiply;
-      animation: crtRoll 140ms steps(2, end) infinite;
-    }
-
-    .bars-label {
-      position: absolute;
-      right: 2.2vw;
-      bottom: 3vh;
-      color: rgba(255, 255, 255, 0.92);
-      letter-spacing: 0.2em;
+      transition: opacity 120ms linear;
+      mix-blend-mode: plus-lighter;
+      color: rgba(255, 90, 90, 0.9);
+      letter-spacing: 0.22em;
       font-weight: 700;
-      font-size: clamp(14px, 1.2vw, 28px);
-      text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
-      opacity: 0.8;
+      font-size: clamp(12px, 1vw, 22px);
+      text-shadow: 0 0 8px rgba(120, 0, 0, 0.7);
+      padding: 0.25em 0.65em;
+      border: 1px solid rgba(255, 120, 120, 0.45);
+      background: rgba(20, 0, 0, 0.18);
+      border-radius: 4px;
     }
 
     @keyframes breathe {
       0%, 100% { filter: saturate(1.02) brightness(0.98); }
-      50% { filter: saturate(1.26) brightness(1.1); }
+      50% { filter: saturate(1.16) brightness(1.06); }
     }
 
     @keyframes baselineWarp {
       0%, 100% { transform: translate(0, 0) rotate(0deg) skewX(0deg); }
-      35% { transform: translate(0.35px, -0.4px) rotate(-0.08deg) skewX(0.08deg); }
-      58% { transform: translate(-0.45px, 0.22px) rotate(0.05deg) skewX(-0.11deg); }
+      35% { transform: translate(0.22px, -0.2px) rotate(-0.04deg) skewX(0.04deg); }
+      58% { transform: translate(-0.28px, 0.14px) rotate(0.03deg) skewX(-0.06deg); }
     }
 
     @keyframes shakeBurst {
-      0% { transform: translate(-1px, 0.5px) rotate(-0.14deg); }
-      25% { transform: translate(1.2px, -0.8px) rotate(0.12deg); }
-      50% { transform: translate(-0.8px, -1px) rotate(-0.1deg); }
-      75% { transform: translate(1px, 0.8px) rotate(0.09deg); }
+      0% { transform: translate(-0.6px, 0.3px) rotate(-0.08deg); }
+      25% { transform: translate(0.7px, -0.4px) rotate(0.07deg); }
+      50% { transform: translate(-0.5px, -0.6px) rotate(-0.06deg); }
+      75% { transform: translate(0.6px, 0.4px) rotate(0.05deg); }
       100% { transform: translate(0, 0) rotate(0deg); }
     }
 
@@ -334,8 +299,8 @@
 
     @keyframes staticJitter {
       0% { transform: translate(0, 0); }
-      30% { transform: translate(0.7px, -0.8px); }
-      60% { transform: translate(-1.1px, 0.4px); }
+      30% { transform: translate(0.5px, -0.5px); }
+      60% { transform: translate(-0.8px, 0.3px); }
       100% { transform: translate(0, 0); }
     }
 
@@ -354,13 +319,13 @@
 
     @keyframes crtRoll {
       0% { transform: translateY(0); }
-      50% { transform: translateY(0.8px); }
+      50% { transform: translateY(0.45px); }
       100% { transform: translateY(0); }
     }
 
     @keyframes waveRun {
       0% { transform: translateX(0); }
-      100% { transform: translateX(30px); }
+      100% { transform: translateX(20px); }
     }
 
     @keyframes blink {
@@ -389,9 +354,8 @@
     <div class="blocks" id="blocks"></div>
   </main>
 
-  <div class="broadcast-fail" id="broadcastFail" aria-hidden="true">
-    <div class="bars"></div>
-    <div class="bars-label">NO SIGNAL</div>
+  <div class="signal-fail" id="broadcastFail" aria-hidden="true">
+    NO SIGNAL
   </div>
 
   <script>
@@ -420,8 +384,8 @@
 
     function spawnPixel() {
       const dot = document.createElement('span');
-      dot.className = `pixel ${Math.random() < 0.2 ? 'hot' : Math.random() < 0.65 ? 'dead' : ''}`.trim();
-      const size = Math.random() < 0.2 ? 3 : 2;
+      dot.className = `pixel ${Math.random() < 0.16 ? 'hot' : Math.random() < 0.52 ? 'dead' : ''}`.trim();
+      const size = Math.random() < 0.14 ? 3 : 2;
       const p = borderPosition(size);
 
       dot.style.width = `${size}px`;
@@ -431,68 +395,68 @@
       dot.style.opacity = String(rand(0.35, 0.98));
       pixelsLayer.appendChild(dot);
 
-      setTimeout(() => dot.remove(), rand(200, 1100));
+      setTimeout(() => dot.remove(), rand(280, 1400));
     }
 
     function spawnInvert() {
-      if (Math.random() > 0.68) return;
+      if (Math.random() > 0.58) return;
       const block = document.createElement('span');
       block.className = 'invert';
-      const size = pick([4, 5, 6, 7, 8, 9, 10]);
+      const size = pick([4, 5, 6, 7, 8]);
       const p = borderPosition(size);
 
       block.style.width = `${size}px`;
       block.style.height = `${size}px`;
       block.style.left = `${p.x}px`;
       block.style.top = `${p.y}px`;
-      block.style.animationDuration = `${rand(800, 1800)}ms`;
+      block.style.animationDuration = `${rand(1200, 2400)}ms`;
       invertLayer.appendChild(block);
 
-      setTimeout(() => block.remove(), rand(350, 1400));
+      setTimeout(() => block.remove(), rand(500, 1900));
     }
 
     function spawnChunk() {
-      if (Math.random() > 0.62) return;
+      if (Math.random() > 0.4) return;
       const block = document.createElement('span');
       const kind = Math.random() < 0.5 ? 'dead' : 'invert';
       block.className = `chunk ${kind}`;
 
-      const sizeW = pick([12, 16, 20, 24, 28, 34, 40, 56, 72]);
-      const sizeH = pick([8, 12, 16, 20, 24, 28, 32]);
+      const sizeW = pick([10, 14, 18, 22, 26, 32, 40]);
+      const sizeH = pick([8, 10, 12, 16, 20, 24]);
       const p = borderPosition(Math.max(sizeW, sizeH));
 
       block.style.width = `${sizeW}px`;
       block.style.height = `${sizeH}px`;
       block.style.left = `${p.x}px`;
       block.style.top = `${p.y}px`;
-      block.style.transform = `skew(${rand(-8, 8).toFixed(2)}deg, ${rand(-5, 5).toFixed(2)}deg)`;
+      block.style.transform = `skew(${rand(-5, 5).toFixed(2)}deg, ${rand(-3, 3).toFixed(2)}deg)`;
       blocksLayer.appendChild(block);
 
-      setTimeout(() => block.remove(), rand(450, 1600));
+      setTimeout(() => block.remove(), rand(600, 2200));
     }
 
     function moodShift() {
-      root.style.setProperty('--pulse', rand(0.84, 1.2).toFixed(3));
-      root.style.setProperty('--noise-shift', `${rand(-2.2, 2.2).toFixed(2)}px`);
-      root.style.setProperty('--flicker-alpha', rand(0.16, 0.42).toFixed(3));
-      root.style.setProperty('--crt-vignette', rand(0.16, 0.36).toFixed(3));
-      root.style.setProperty('--rgb-shift', `${rand(-2.4, 2.4).toFixed(2)}px`);
-      root.style.setProperty('--wave-y', `${rand(-3, 3).toFixed(2)}px`);
-      root.style.setProperty('--wave-tilt', `${rand(-0.6, 0.6).toFixed(3)}deg`);
-      root.style.setProperty('--hue', `${rand(-15, 15).toFixed(2)}deg`);
-      root.style.setProperty('--sat', rand(0.95, 1.38).toFixed(3));
-      root.style.setProperty('--bright', rand(0.88, 1.15).toFixed(3));
-      root.style.setProperty('--contrast', rand(0.95, 1.28).toFixed(3));
+      root.style.setProperty('--pulse', rand(0.92, 1.1).toFixed(3));
+      root.style.setProperty('--noise-shift', `${rand(-1.6, 1.6).toFixed(2)}px`);
+      root.style.setProperty('--flicker-alpha', rand(0.12, 0.26).toFixed(3));
+      root.style.setProperty('--crt-vignette', rand(0.14, 0.28).toFixed(3));
+      root.style.setProperty('--rgb-shift', `${rand(-1.5, 1.5).toFixed(2)}px`);
+      root.style.setProperty('--wave-y', `${rand(-1.8, 1.8).toFixed(2)}px`);
+      root.style.setProperty('--wave-tilt', `${rand(-0.35, 0.35).toFixed(3)}deg`);
+      root.style.setProperty('--hue', `${rand(-8, 8).toFixed(2)}deg`);
+      root.style.setProperty('--sat', rand(0.96, 1.18).toFixed(3));
+      root.style.setProperty('--bright', rand(0.94, 1.08).toFixed(3));
+      root.style.setProperty('--contrast', rand(0.97, 1.14).toFixed(3));
     }
 
     function warpPulse() {
-      if (Math.random() > 0.26) return;
-      root.style.setProperty('--warp-x', `${rand(-3.2, 3.2).toFixed(2)}px`);
-      root.style.setProperty('--warp-y', `${rand(-2.4, 2.4).toFixed(2)}px`);
-      root.style.setProperty('--warp-rot', `${rand(-0.65, 0.65).toFixed(3)}deg`);
-      root.style.setProperty('--warp-skew', `${rand(-1.5, 1.5).toFixed(3)}deg`);
+      if (Math.random() > 0.18) return;
+      root.style.setProperty('--warp-x', `${rand(-1.8, 1.8).toFixed(2)}px`);
+      root.style.setProperty('--warp-y', `${rand(-1.2, 1.2).toFixed(2)}px`);
+      root.style.setProperty('--warp-rot', `${rand(-0.35, 0.35).toFixed(3)}deg`);
+      root.style.setProperty('--warp-skew', `${rand(-0.8, 0.8).toFixed(3)}deg`);
 
-      frame.style.filter = `hue-rotate(${rand(-34, 34).toFixed(1)}deg) saturate(${rand(0.9, 1.5).toFixed(2)}) brightness(${rand(0.8, 1.2).toFixed(2)}) contrast(${rand(0.95, 1.35).toFixed(2)})`;
+      frame.style.filter = `hue-rotate(${rand(-18, 18).toFixed(1)}deg) saturate(${rand(0.95, 1.25).toFixed(2)}) brightness(${rand(0.9, 1.12).toFixed(2)}) contrast(${rand(0.96, 1.18).toFixed(2)})`;
       frame.classList.add('shaking');
 
       setTimeout(() => {
@@ -502,55 +466,55 @@
         root.style.setProperty('--warp-skew', '0deg');
         frame.style.filter = '';
         frame.classList.remove('shaking');
-      }, rand(120, 420));
+      }, rand(110, 300));
     }
 
-    function triggerColorBars() {
-      if (Math.random() > 0.07) return;
-      const flashes = Math.floor(rand(1, 4));
+    function triggerNoSignal() {
+      if (Math.random() > 0.06) return;
+      const flashes = Math.floor(rand(1, 3));
       let count = 0;
 
       const flash = () => {
-        const alpha = rand(0.36, 0.84).toFixed(2);
+        const alpha = rand(0.28, 0.68).toFixed(2);
         root.style.setProperty('--bar-opacity', alpha);
-        broadcastFail.style.transform = `translate(${rand(-3, 3).toFixed(2)}px, ${rand(-2, 2).toFixed(2)}px)`;
+        broadcastFail.style.transform = `translate(calc(-50% + ${rand(-2, 2).toFixed(2)}px), ${rand(-1.5, 1.5).toFixed(2)}px)`;
 
         setTimeout(() => {
           root.style.setProperty('--bar-opacity', '0');
-          broadcastFail.style.transform = 'translate(0, 0)';
+          broadcastFail.style.transform = 'translateX(-50%)';
           count += 1;
-          if (count < flashes) setTimeout(flash, rand(60, 240));
-        }, rand(70, 220));
+          if (count < flashes) setTimeout(flash, rand(120, 360));
+        }, rand(100, 260));
       };
 
       flash();
     }
 
     setInterval(() => {
-      const burst = Math.floor(rand(4, 14));
+      const burst = Math.floor(rand(3, 9));
       for (let i = 0; i < burst; i++) spawnPixel();
 
-      const chunkBursts = Math.floor(rand(1, 5));
+      const chunkBursts = Math.floor(rand(0, 3));
       for (let i = 0; i < chunkBursts; i++) spawnChunk();
 
       spawnInvert();
       warpPulse();
-      triggerColorBars();
+      triggerNoSignal();
 
-      if (Math.random() < 0.5) moodShift();
-    }, 95);
+      if (Math.random() < 0.34) moodShift();
+    }, 120);
 
     setInterval(() => {
-      if (pixelsLayer.childElementCount > 360) {
-        [...pixelsLayer.children].slice(0, 110).forEach((el) => el.remove());
+      if (pixelsLayer.childElementCount > 260) {
+        [...pixelsLayer.children].slice(0, 80).forEach((el) => el.remove());
       }
-      if (invertLayer.childElementCount > 95) {
-        [...invertLayer.children].slice(0, 30).forEach((el) => el.remove());
+      if (invertLayer.childElementCount > 70) {
+        [...invertLayer.children].slice(0, 20).forEach((el) => el.remove());
       }
-      if (blocksLayer.childElementCount > 120) {
-        [...blocksLayer.children].slice(0, 45).forEach((el) => el.remove());
+      if (blocksLayer.childElementCount > 70) {
+        [...blocksLayer.children].slice(0, 22).forEach((el) => el.remove());
       }
-    }, 620);
+    }, 760);
 
     window.addEventListener('resize', moodShift);
     moodShift();
