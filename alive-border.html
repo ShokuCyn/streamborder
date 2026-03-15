@@ -25,7 +25,8 @@
       --contrast: 1;
       --wave-y: 0px;
       --wave-tilt: 0deg;
-      --bar-opacity: 0;
+      --jag-x: 0px;
+      --jag-y: 0px;
     }
 
     * { box-sizing: border-box; }
@@ -106,7 +107,8 @@
     .blocks,
     .crt,
     .scanline,
-    .wave-overlay {
+    .wave-overlay,
+    .jagged-edge {
       position: absolute;
       inset: 0;
       border-radius: 12px;
@@ -119,7 +121,8 @@
     .blocks,
     .crt,
     .scanline,
-    .wave-overlay {
+    .wave-overlay,
+    .jagged-edge {
       -webkit-mask:
         linear-gradient(#000 0 0) content-box,
         linear-gradient(#000 0 0);
@@ -194,6 +197,23 @@
       mix-blend-mode: overlay;
     }
 
+    .jagged-edge {
+      opacity: 0.48;
+      background:
+        repeating-linear-gradient(
+          135deg,
+          rgba(28, 18, 55, 0.92) 0px,
+          rgba(28, 18, 55, 0.92) 5px,
+          rgba(176, 132, 255, 0.14) 6px,
+          rgba(176, 132, 255, 0.14) 8px,
+          rgba(25, 16, 49, 0.9) 10px
+        );
+      mix-blend-mode: multiply;
+      filter: contrast(1.14);
+      animation: jagSkitter 160ms steps(2, end) infinite;
+      transform: translate(var(--jag-x), var(--jag-y));
+    }
+
     .rgb-ghost {
       position: absolute;
       inset: 0;
@@ -252,26 +272,6 @@
       mix-blend-mode: difference;
     }
 
-    .signal-fail {
-      position: fixed;
-      left: 50%;
-      top: 7.5%;
-      transform: translateX(-50%);
-      pointer-events: none;
-      opacity: var(--bar-opacity);
-      transition: opacity 120ms linear;
-      mix-blend-mode: plus-lighter;
-      color: rgba(255, 90, 90, 0.9);
-      letter-spacing: 0.22em;
-      font-weight: 700;
-      font-size: clamp(12px, 1vw, 22px);
-      text-shadow: 0 0 8px rgba(120, 0, 0, 0.7);
-      padding: 0.25em 0.65em;
-      border: 1px solid rgba(255, 120, 120, 0.45);
-      background: rgba(20, 0, 0, 0.18);
-      border-radius: 4px;
-    }
-
     @keyframes breathe {
       0%, 100% { filter: saturate(1.02) brightness(0.98); }
       50% { filter: saturate(1.16) brightness(1.06); }
@@ -328,6 +328,14 @@
       100% { transform: translateX(20px); }
     }
 
+    @keyframes jagSkitter {
+      0% { transform: translate(0, 0); }
+      25% { transform: translate(0.6px, -0.4px); }
+      50% { transform: translate(-0.7px, 0.3px); }
+      75% { transform: translate(0.4px, 0.5px); }
+      100% { transform: translate(0, 0); }
+    }
+
     @keyframes blink {
       0%, 15%, 100% { opacity: 0.76; }
       16%, 18% { opacity: 0.08; }
@@ -349,19 +357,15 @@
     <div class="crt"></div>
     <div class="scanline"></div>
     <div class="wave-overlay"></div>
+    <div class="jagged-edge"></div>
     <div class="pixels" id="pixels"></div>
     <div class="inverts" id="inverts"></div>
     <div class="blocks" id="blocks"></div>
   </main>
 
-  <div class="signal-fail" id="broadcastFail" aria-hidden="true">
-    NO SIGNAL
-  </div>
-
   <script>
     const root = document.documentElement;
     const frame = document.getElementById('frame');
-    const broadcastFail = document.getElementById('broadcastFail');
     const pixelsLayer = document.getElementById('pixels');
     const invertLayer = document.getElementById('inverts');
     const blocksLayer = document.getElementById('blocks');
@@ -447,6 +451,8 @@
       root.style.setProperty('--sat', rand(0.96, 1.18).toFixed(3));
       root.style.setProperty('--bright', rand(0.94, 1.08).toFixed(3));
       root.style.setProperty('--contrast', rand(0.97, 1.14).toFixed(3));
+      root.style.setProperty('--jag-x', `${rand(-1.1, 1.1).toFixed(2)}px`);
+      root.style.setProperty('--jag-y', `${rand(-0.8, 0.8).toFixed(2)}px`);
     }
 
     function warpPulse() {
@@ -469,27 +475,6 @@
       }, rand(110, 300));
     }
 
-    function triggerNoSignal() {
-      if (Math.random() > 0.06) return;
-      const flashes = Math.floor(rand(1, 3));
-      let count = 0;
-
-      const flash = () => {
-        const alpha = rand(0.28, 0.68).toFixed(2);
-        root.style.setProperty('--bar-opacity', alpha);
-        broadcastFail.style.transform = `translate(calc(-50% + ${rand(-2, 2).toFixed(2)}px), ${rand(-1.5, 1.5).toFixed(2)}px)`;
-
-        setTimeout(() => {
-          root.style.setProperty('--bar-opacity', '0');
-          broadcastFail.style.transform = 'translateX(-50%)';
-          count += 1;
-          if (count < flashes) setTimeout(flash, rand(120, 360));
-        }, rand(100, 260));
-      };
-
-      flash();
-    }
-
     setInterval(() => {
       const burst = Math.floor(rand(3, 9));
       for (let i = 0; i < burst; i++) spawnPixel();
@@ -499,7 +484,6 @@
 
       spawnInvert();
       warpPulse();
-      triggerNoSignal();
 
       if (Math.random() < 0.34) moodShift();
     }, 120);

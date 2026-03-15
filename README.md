@@ -12,8 +12,8 @@ This repository includes a creepy animated browser-source border for Streamlabs:
 - Motion stack: occasional shake bursts, slight rotation/skew warp pulses, micro-jitter, and breathing pulse
 - Color drift: randomized hue/saturation/brightness/contrast shifts and RGB ghost offsets
 - CRT damage: rolling scanline, TV-line texture, vignette darkening, and wave-like distortion
+- Jagged edge treatment: irregular sawtooth-like edge texture that jitters subtly along the border
 - Artifacts: dead/hot pixels, invert pixels, and medium dead/inverted chunk blocks
-- Signal interruptions: intermittent NO SIGNAL text flashes (no full-screen color bars)
 
 ## Streamlabs setup
 
